@@ -1,9 +1,10 @@
+HTML
 <!DOCTYPE html>
 <html lang="ca">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapa Interactiu de Platges de Catalunya</title>
+    <title>Von Vany - Mapa de Platges</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
@@ -12,25 +13,82 @@
             margin: 0;
             padding: 0;
             height: 100%;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f4f8;
         }
 
         #map {
             width: 100%;
             height: 100vh;
+            z-index: 1;
         }
 
-        /* Panell de Filtres Flotant */
+        /* CAPÇALERA I LOGO */
+        .app-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-svg {
+            width: 40px;
+            height: 40px;
+            filter: drop-shadow(0 2px 4px rgba(30, 58, 138, 0.2));
+        }
+
+        .app-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: #1e3a8a;
+            letter-spacing: -0.5px;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        /* AUTOR */
+        .author-tag {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            z-index: 2000;
+            font-size: 10px;
+            font-weight: bold;
+            color: #1e3a8a;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 2px 8px;
+            border-radius: 4px;
+            backdrop-filter: blur(5px);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* PANELL DE FILTRES REPOSICIONAT */
         .panel-filtres {
             position: absolute;
-            top: 15px;
+            top: 75px; /* Baixat perquè no toqui la capçalera */
             right: 15px;
             z-index: 1000;
             background: rgba(255, 255, 255, 0.96);
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             width: 280px;
-            max-height: 85vh;
+            max-height: 80vh;
             backdrop-filter: blur(5px);
             transition: all 0.3s ease;
             overflow: hidden;
@@ -44,7 +102,6 @@
             background: #1e3a8a;
             color: white;
             cursor: pointer;
-            user-select: none;
         }
 
         .panel-header h3 {
@@ -57,7 +114,7 @@
             background: rgba(255, 255, 255, 0.2);
             border: none;
             color: white;
-            font-size: 12px;
+            font-size: 11px;
             padding: 4px 8px;
             border-radius: 6px;
             cursor: pointer;
@@ -65,18 +122,16 @@
 
         .panel-contingut {
             padding: 15px;
-            max-height: calc(85vh - 50px);
+            max-height: calc(80vh - 50px);
             overflow-y: auto;
         }
 
-        /* Estat plegat */
         .panel-filtres.plegat .panel-contingut {
             display: none;
         }
 
         .panel-filtres.plegat {
             width: auto;
-            border-radius: 8px;
         }
 
         .seccio-titol {
@@ -103,7 +158,6 @@
             height: 16px;
         }
 
-        /* Quadre informatiu sobreimprès */
         .info-quadre {
             position: absolute;
             bottom: 20px;
@@ -117,7 +171,7 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
             line-height: 1.4;
             border-left: 4px solid #3b82f6;
-            max-width: 250px;
+            max-width: 220px;
         }
 
         .info-quadre a {
@@ -126,7 +180,7 @@
             font-weight: bold;
         }
 
-        /* Estil de les etiquetes de les platges */
+        /* ETIQUETES MAPA */
         .etiqueta-platja-nom {
             background: rgba(255, 255, 255, 0.95);
             border: 2px solid #2563eb;
@@ -136,11 +190,9 @@
             font-size: 11px;
             padding: 2px 6px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-            cursor: pointer;
             white-space: nowrap;
         }
 
-        /* Estil de les etiquetes dels municipis */
         .etiqueta-municipi-nom {
             background: rgba(241, 245, 249, 0.85);
             border: 1px dashed #475569;
@@ -149,9 +201,7 @@
             font-weight: 700;
             font-size: 10px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
             padding: 1px 5px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
             pointer-events: none;
             white-space: nowrap;
         }
@@ -173,48 +223,66 @@
             color: #334155;
             border-left: 3px solid #64748b;
         }
+
+        @media (max-width: 600px) {
+            .app-title { font-size: 18px; }
+            .panel-filtres { top: 70px; right: 10px; width: 250px; }
+        }
     </style>
 </head>
 <body>
 
+    <header class="app-header">
+        <div class="logo-container">
+            <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="70" cy="30" r="15" fill="#FDE047" />
+                <path d="M50 10 C35 10 25 22 25 35 C25 55 50 85 50 85 C50 85 75 55 75 35 C75 22 65 10 50 10 Z" fill="#1e3a8a" />
+                <circle cx="50" cy="35" r="8" fill="white" />
+                <path d="M10 80 Q 30 70 50 80 T 90 80" stroke="#3b82f6" stroke-width="6" fill="none" stroke-linecap="round" />
+            </svg>
+            <h1 class="app-title">Von Vany</h1>
+        </div>
+    </header>
+
     <div class="panel-filtres" id="panelFiltres">
         <div class="panel-header" onclick="toggleFiltres()">
-            <h3>🔍 Filtres de Platja</h3>
+            <h3>🔍 Filtres</h3>
             <button class="btn-toggle-filtres" id="btnToggle">▲ Plegar</button>
         </div>
 
         <div class="panel-contingut">
             <div class="seccio-titol">Estat de la Bandera</div>
-            <label class="filtre-item"><input type="checkbox" id="f-verda" checked> 🟢 Bandera Verda</label>
-            <label class="filtre-item"><input type="checkbox" id="f-groga" checked> 🟡 Bandera Groga</label>
-            <label class="filtre-item"><input type="checkbox" id="f-vermella" checked> 🔴 Bandera Vermella</label>
-            <label class="filtre-item"><input type="checkbox" id="f-sense-bandera" checked> ⚪ Sense dades de bandera</label>
+            <label class="filtre-item"><input type="checkbox" id="f-verda" checked> 🟢 Verda</label>
+            <label class="filtre-item"><input type="checkbox" id="f-groga" checked> 🟡 Groga</label>
+            <label class="filtre-item"><input type="checkbox" id="f-vermella" checked> 🔴 Vermella</label>
+            <label class="filtre-item"><input type="checkbox" id="f-sense-bandera" checked> ⚪ Sense dades</label>
 
             <div class="seccio-titol">Estat del Mar</div>
-            <label class="filtre-item"><input type="checkbox" id="f-sense-meduses"> 🪼 Només sense meduses</label>
+            <label class="filtre-item"><input type="checkbox" id="f-sense-meduses"> 🪼 Sense meduses</label>
 
-            <div class="seccio-titol">Equipaments i Serveis</div>
+            <div class="seccio-titol">Equipaments</div>
             <label class="filtre-item"><input type="checkbox" id="f-banderablava"> 🔵 Bandera Blava</label>
             <label class="filtre-item"><input type="checkbox" id="f-vaters"> 🚽 Lavabos</label>
-            <label class="filtre-item"><input type="checkbox" id="f-socorristes"> 🛟 Socorristes / Vigilància</label>
+            <label class="filtre-item"><input type="checkbox" id="f-socorristes"> 🛟 Vigilància</label>
             <label class="filtre-item"><input type="checkbox" id="f-dutxes"> 🚿 Dutxes</label>
-            <label class="filtre-item"><input type="checkbox" id="f-discapacitats"> ♿ Aparcament Discapacitats</label>
-            <label class="filtre-item"><input type="checkbox" id="f-bars"> 🍹 Bars / Xiringuitos</label>
-            <label class="filtre-item"><input type="checkbox" id="f-mascotes"> 🐶 Bany permès a Mascotes</label>
+            <label class="filtre-item"><input type="checkbox" id="f-discapacitats"> ♿ Accés PMR</label>
+            <label class="filtre-item"><input type="checkbox" id="f-bars"> 🍹 Bars</label>
+            <label class="filtre-item"><input type="checkbox" id="f-mascotes"> 🐶 Mascotes</label>
         </div>
     </div>
 
     <div class="info-quadre">
-        <b>Font:</b> <a href="https://analisi.transparenciacatalunya.cat/Turisme/Estat-de-les-platges-de-Catalunya-informaci-immedi/4baz-cjv2/about_data" target="_blank">Dades Obertes Gencat (4baz-cjv2)</a><br>
-        <span id="data-actualitzacio">Carregant data d'actualització...</span>
+        <b>Font:</b> <a href="https://analisi.transparenciacatalunya.cat/Turisme/Estat-de-les-platges-de-Catalunya-informaci-immedi/4baz-cjv2/about_data" target="_blank">Gencat 4baz-cjv2</a><br>
+        <span id="data-actualitzacio">Actualitzant...</span>
     </div>
+
+    <div class="author-tag">Autor: ERT</div>
 
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        // Inicialització del mapa
         const map = L.map('map').setView([41.3851, 2.1734], 9);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -224,61 +292,31 @@
 
         let llistaMarcadors = [];
 
-        // Funcions per plega / desplegar panell de filtres
         function toggleFiltres() {
             const panel = document.getElementById('panelFiltres');
             const btn = document.getElementById('btnToggle');
-            
             panel.classList.toggle('plegat');
-            if (panel.classList.contains('plegat')) {
-                btn.innerText = '▼ Filtres';
-            } else {
-                btn.innerText = '▲ Plegar';
-            }
+            btn.innerText = panel.classList.contains('plegat') ? '▼ Filtres' : '▲ Plegar';
         }
 
-        // Si és un dispositiu mòbil (pantalla petita), inicia amb els filtres plegats
-        if (window.innerWidth < 768) {
-            toggleFiltres();
-        }
+        if (window.innerWidth < 768) toggleFiltres();
 
-        // Funcions auxiliars de neteja
         function normalitzarCodi(codi) {
-            if (!codi) return "";
-            return String(codi).replace(/^0+/, "").trim();
+            return codi ? String(codi).replace(/^0+/, "").trim() : "";
         }
 
         function netejarNomPlatja(txt) {
             if (!txt) return "";
-            let s = String(txt).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            s = s.replace(/\b(platja|platjes|cala|platja de|platja d|platja del|platja dels|platja des|de|del|dels|d|la|les|el|els)\b/g, " ");
-            return s.replace(/[^a-z0-9]/g, "").trim();
+            return String(txt).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                .replace(/\b(platja|platjes|cala|de|del|la|les|el|els|d)\b/g, " ")
+                .replace(/[^a-z0-9]/g, "").trim();
         }
 
         function esCert(valor) {
-            if (!valor) return false;
             const s = String(valor).toLowerCase().trim();
             return s === 'cert' || s === 'si' || s === 'sí' || s === 'true' || s === '1';
         }
 
-        function formatarTimestamp(ts) {
-            if (!ts) return null;
-            try {
-                let d = typeof ts === 'number' 
-                    ? (ts > 10000000000 ? new Date(ts) : new Date(ts * 1000))
-                    : new Date(ts);
-
-                if (!isNaN(d.getTime())) {
-                    return d.toLocaleString('ca-ES', { 
-                        day: '2-digit', month: '2-digit', year: 'numeric', 
-                        hour: '2-digit', minute: '2-digit' 
-                    });
-                }
-            } catch(e) {}
-            return null;
-        }
-
-        // URLs de les dades
         const urlEstatTempsReal = "https://analisi.transparenciacatalunya.cat/resource/4baz-cjv2.json?$limit=10000";
         const urlEquipaments = "https://analisi.transparenciacatalunya.cat/resource/wcxa-38q9.json?$limit=10000";
         const urlMetadata = "https://analisi.transparenciacatalunya.cat/api/views/4baz-cjv2.json";
@@ -291,229 +329,109 @@
             fetch(urlMetadata).then(r => r.json()).catch(() => null)
         ]).then(([estatsTempsReal, equipaments, metadata]) => {
 
-            // Data d'actualització de les metadades
-            let dataActualitzacioText = "No disponible";
             if (metadata) {
-                const tsMeta = metadata.rowsUpdatedAt || metadata.dataUpdatedAt || metadata.indexUpdatedAt;
-                const formatted = formatarTimestamp(tsMeta);
-                if (formatted) dataActualitzacioText = formatted;
+                const ts = metadata.rowsUpdatedAt || metadata.dataUpdatedAt;
+                const d = new Date(ts);
+                document.getElementById('data-actualitzacio').innerText = "Última act: " + d.toLocaleString('ca-ES', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
             }
 
-            if (dataActualitzacioText === "No disponible" && estatsTempsReal.length > 0) {
-                const primerData = estatsTempsReal.find(e => e.dataactualitzacio || e.data_actualitzacio);
-                if (primerData) {
-                    const formatted = formatarTimestamp(primerData.dataactualitzacio || primerData.data_actualitzacio);
-                    if (formatted) dataActualitzacioText = formatted;
-                }
-            }
-
-            document.getElementById('data-actualitzacio').innerText = "Última actualització: " + dataActualitzacioText;
-
-            // Indexació de dades en temps real
             const mapaCodi = {};
             const mapaNomNetejat = {};
-
             estatsTempsReal.forEach(e => {
-                const codi = normalitzarCodi(e.codiplatja || e.codi_platja || e.codi);
+                const codi = normalitzarCodi(e.codi_platja || e.codiplatja);
                 if (codi) mapaCodi[codi] = e;
-
-                const nomOriginal = e.platja || e.nom_platja || e.nomplatja;
-                const nomNetejat = netejarNomPlatja(nomOriginal);
-                if (nomNetejat) mapaNomNetejat[nomNetejat] = e;
+                const nom = netejarNomPlatja(e.platja);
+                if (nom) mapaNomNetejat[nom] = e;
             });
 
-            // Agrupació per calcular el centre de cada Municipi
             const municipisAgrupats = {};
 
-            // Processar platges
             equipaments.forEach(platja => {
-                const lat = parseFloat(platja.coordenada_x);
-                const lng = parseFloat(platja.coordenada_y);
+                const lat = parseFloat(platja.coordenada_x), lng = parseFloat(platja.coordenada_y);
+                if (isNaN(lat) || isNaN(lng)) return;
 
-                if (!isNaN(lat) && !isNaN(lng)) {
-                    
-                    // Afegir dades per calcular centre del municipi
-                    const nomMunicipi = platja.municipi_municipi || 'Desconegut';
-                    if (!municipisAgrupats[nomMunicipi]) {
-                        municipisAgrupats[nomMunicipi] = { latSum: 0, lngSum: 0, count: 0 };
-                    }
-                    municipisAgrupats[nomMunicipi].latSum += lat;
-                    municipisAgrupats[nomMunicipi].lngSum += lng;
-                    municipisAgrupats[nomMunicipi].count += 1;
+                const nomMuni = platja.municipi_municipi || 'Desconegut';
+                if (!municipisAgrupats[nomMuni]) municipisAgrupats[nomMuni] = { latSum: 0, lngSum: 0, count: 0 };
+                municipisAgrupats[nomMuni].latSum += lat;
+                municipisAgrupats[nomMuni].lngSum += lng;
+                municipisAgrupats[nomMuni].count++;
 
-                    // Cerca coincidència en temps real
-                    const codiP = normalitzarCodi(platja.codiplatja || platja.codi_platja);
-                    const nomNet = netejarNomPlatja(platja.platja);
+                const codiP = normalitzarCodi(platja.codiplatja);
+                const nomNet = netejarNomPlatja(platja.platja);
+                let e = mapaCodi[codiP] || mapaNomNetejat[nomNet] || {};
 
-                    let dadaDinamica = mapaCodi[codiP];
+                const rawB = String(e.bandera_estat || e.estat_bandera || '').toLowerCase().trim();
+                let bCol = 'sense_dades', bIcon = '⚪', bTxt = 'SENSE DADES';
 
-                    if (!dadaDinamica && nomNet) {
-                        dadaDinamica = mapaNomNetejat[nomNet];
-                    }
+                if (rawB === 'verda') { bCol = 'verda'; bIcon = '🟢'; bTxt = 'VERDA'; }
+                else if (rawB === 'groga') { bCol = 'groga'; bIcon = '🟡'; bTxt = 'GROGA'; }
+                else if (rawB === 'vermella') { bCol = 'vermella'; bIcon = '🔴'; bTxt = 'VERMELLA'; }
 
-                    if (!dadaDinamica && nomNet && nomNet.length > 3) {
-                        dadaDinamica = estatsTempsReal.find(e => {
-                            const eNomNet = netejarNomPlatja(e.platja || e.nom_platja || e.nomplatja);
-                            return eNomNet && (eNomNet.includes(nomNet) || nomNet.includes(eNomNet));
-                        });
-                    }
+                const med = e.presencia_meduses || e.estat_meduses || 'Sense dades';
+                const popup = `
+                    <div class="popup-title">${platja.platja}</div>
+                    <b>Estat:</b> ${bIcon} ${bTxt}<br>
+                    <i>${e.bandera_motiubandera || 'Sense incidències'}</i><hr>
+                    <b>🌡️ Temp:</b> ${e.temperatura_aigua || 'N/D'} ºC<br>
+                    <b>🪼 Meduses:</b> ${med}<br><hr>
+                    <b>🔵 B. Blava:</b> ${esCert(platja.banderablava)?'Sí':'No'}<br>
+                    <b>🚽 Lavabos:</b> ${esCert(platja.vaters)?'Sí':'No'} | <b>🛟 Vigilància:</b> ${esCert(platja.socorristes)?'Sí':'No'}<br>
+                    <b>🐶 Mascotes:</b> ${esCert(platja.mascotes)?'Sí':'No'}
+                `;
 
-                    if (!dadaDinamica) dadaDinamica = {};
+                const m = L.marker([lat, lng], { icon: iconaInvisible }).bindPopup(popup);
+                m.bindTooltip(`${bIcon} ${platja.platja}`, { permanent: true, direction: 'center', className: 'etiqueta-platja-nom', interactive: true });
 
-                    // Lectura bandera_estat
-                    const rawBandera = String(dadaDinamica.bandera_estat || dadaDinamica.estat_bandera || '').toLowerCase().trim();
-
-                    let banderaEstat = 'sense_dades';
-                    let iconaBandera = '⚪';
-                    let textBandera = 'SENSE DADES';
-
-                    if (rawBandera === 'verda') {
-                        banderaEstat = 'verda';
-                        iconaBandera = '🟢';
-                        textBandera = 'VERDA';
-                    } else if (rawBandera === 'groga') {
-                        banderaEstat = 'groga';
-                        iconaBandera = '🟡';
-                        textBandera = 'GROGA';
-                    } else if (rawBandera === 'vermella') {
-                        banderaEstat = 'vermella';
-                        iconaBandera = '🔴';
-                        textBandera = 'VERMELLA';
-                    } else if (rawBandera) {
-                        textBandera = rawBandera.toUpperCase();
-                    }
-
-                    const esBanderaBlava = esCert(platja.banderablava);
-                    const motiuBandera = dadaDinamica.bandera_motiubandera || dadaDinamica.estat_motiubandera || 'Sense incidències destacades';
-                    const tempRaw = dadaDinamica.temperatura_aigua || dadaDinamica.estat_temperatura;
-                    const temperatura = (tempRaw !== undefined && tempRaw !== null && tempRaw !== '') ? `${tempRaw} ºC` : 'No disponible';
-                    const transparencia = dadaDinamica.transparencia_aigua || dadaDinamica.estat_transparenciaaigua || 'No disponible';
-                    const meduses = dadaDinamica.presencia_meduses || dadaDinamica.estat_meduses || 'Sense dades';
-
-                    // Popup
-                    const contingutPopup = `
-                        <div class="popup-title">${platja.platja}</div>
-                        <b>Municipi:</b> ${platja.municipi_municipi}<br>
-                        <b>Costa:</b> ${platja.municipi_costa}<hr style="margin:6px 0;">
-                        <b>Estat Bandera:</b> ${iconaBandera} ${textBandera}<br>
-                        <div class="motiu-box"><b>Motiu:</b> ${motiuBandera}</div>
-                        <hr style="margin:6px 0;">
-                        <b>🌡️ Temp. aigua:</b> ${temperatura}<br>
-                        <b>💧 Transparència aigua:</b> ${transparencia}<br>
-                        <b>🪼 Meduses:</b> ${meduses}<br>
-                        <hr style="margin:6px 0;">
-                        <b>🔵 Bandera Blava:</b> ${esBanderaBlava ? 'Sí' : 'No'}<br>
-                        <b>Toilet Lavabos:</b> ${esCert(platja.vaters) ? 'Sí' : 'No'}<br>
-                        <b>🛟 Socorristes:</b> ${esCert(platja.vigilancia) || esCert(platja.socorristes) ? 'Sí' : 'No'}<br>
-                        <b>🚿 Dutxes:</b> ${esCert(platja.dutxes) ? 'Sí' : 'No'}<br>
-                        <b>♿ Aparcament PMR:</b> ${esCert(platja.aparcamentdiscapacitats) ? 'Sí' : 'No'}<br>
-                        <b>🍹 Bars:</b> ${esCert(platja.bars) ? 'Sí' : 'No'}<br>
-                        <b>🐶 Mascotes:</b> ${esCert(platja.mascotes) ? 'Sí' : 'No'}
-                    `;
-
-                    const marcador = L.marker([lat, lng], { icon: iconaInvisible });
-                    marcador.bindPopup(contingutPopup);
-
-                    // Etiqueta de la platja
-                    marcador.bindTooltip(`${iconaBandera} ${platja.platja}`, {
-                        permanent: true,
-                        direction: 'center',
-                        className: 'etiqueta-platja-nom',
-                        interactive: true
-                    });
-
-                    marcador.dadesPlatja = platja;
-                    marcador.banderaColor = banderaEstat;
-                    marcador.esBanderaBlava = esBanderaBlava;
-                    marcador.medusesVal = meduses;
-
-                    marcador.addTo(map);
-                    llistaMarcadors.push(marcador);
-                }
+                m.dades = { p: platja, col: bCol, med: med.toLowerCase(), blava: esCert(platja.banderablava) };
+                m.addTo(map);
+                llistaMarcadors.push(m);
             });
 
-            // --- AFEDIR ETIQUETES DE MUNICIPIS AL MAPA ---
-            Object.keys(municipisAgrupats).forEach(nomMuni => {
-                const item = municipisAgrupats[nomMuni];
-                if (item.count > 0) {
-                    const latCentre = item.latSum / item.count;
-                    const lngCentre = item.lngSum / item.count;
-
-                    // Marker discret pel nom del municipi
-                    const mMarker = L.marker([latCentre, lngCentre], { icon: iconaInvisible });
-                    mMarker.bindTooltip(`${nomMuni}`, {
-                        permanent: true,
-                        direction: 'top',
-                        className: 'etiqueta-municipi-nom',
-                        offset: [0, -15],
-                        interactive: false
-                    });
-                    mMarker.addTo(map);
-                }
+            Object.keys(municipisAgrupats).forEach(n => {
+                const i = municipisAgrupats[n];
+                L.marker([i.latSum/i.count, i.lngSum/i.count], { icon: iconaInvisible })
+                    .bindTooltip(`${n}`, { permanent: true, direction: 'top', className: 'etiqueta-municipi-nom', offset: [0,-15], interactive: false })
+                    .addTo(map);
             });
-
-        }).catch(err => {
-            console.error("Error carregant les dades:", err);
-            document.getElementById('data-actualitzacio').innerText = "Error en carregar les dades";
         });
 
-        // Lògica de Filtratge
         function aplicarFiltres() {
-            const fVerda = document.getElementById('f-verda').checked;
-            const fGroga = document.getElementById('f-groga').checked;
-            const fVermella = document.getElementById('f-vermella').checked;
-            const fSenseData = document.getElementById('f-sense-bandera').checked;
+            const f = {
+                verda: document.getElementById('f-verda').checked,
+                groga: document.getElementById('f-groga').checked,
+                vermella: document.getElementById('f-vermella').checked,
+                sense: document.getElementById('f-sense-bandera').checked,
+                noMed: document.getElementById('f-sense-meduses').checked,
+                blava: document.getElementById('f-banderablava').checked,
+                vaters: document.getElementById('f-vaters').checked,
+                socors: document.getElementById('f-socorristes').checked,
+                dutxes: document.getElementById('f-dutxes').checked,
+                disc: document.getElementById('f-discapacitats').checked,
+                bars: document.getElementById('f-bars').checked,
+                masc: document.getElementById('f-mascotes').checked
+            };
 
-            const fSenseMeduses = document.getElementById('f-sense-meduses').checked;
+            llistaMarcadors.forEach(m => {
+                const d = m.dades;
+                let v = true;
+                if (d.col === 'verda' && !f.verda) v = false;
+                if (d.col === 'groga' && !f.groga) v = false;
+                if (d.col === 'vermella' && !f.vermella) v = false;
+                if (d.col === 'sense_dades' && !f.sense) v = false;
+                if (f.noMed && (d.med.includes('sí') || d.med.includes('alta') || d.med.includes('mitjana'))) v = false;
+                if (f.blava && !d.blava) v = false;
+                if (f.vaters && !esCert(d.p.vaters)) v = false;
+                if (f.socors && !esCert(d.p.socorristes)) v = false;
+                if (f.dutxes && !esCert(d.p.dutxes)) v = false;
+                if (f.disc && !esCert(d.p.aparcamentdiscapacitats)) v = false;
+                if (f.bars && !esCert(d.p.bars)) v = false;
+                if (f.masc && !esCert(d.p.mascotes)) v = false;
 
-            const fBanderaBlava = document.getElementById('f-banderablava').checked;
-            const fVaters = document.getElementById('f-vaters').checked;
-            const fSocorristes = document.getElementById('f-socorristes').checked;
-            const fDutxes = document.getElementById('f-dutxes').checked;
-            const fDiscapacitats = document.getElementById('f-discapacitats').checked;
-            const fBars = document.getElementById('f-bars').checked;
-            const fMascotes = document.getElementById('f-mascotes').checked;
-
-            llistaMarcadors.forEach(marcador => {
-                const p = marcador.dadesPlatja;
-                const color = marcador.banderaColor;
-                const medusesText = String(marcador.medusesVal).toLowerCase();
-                let visible = true;
-
-                // Filtres de Bandera
-                if (color === 'verda' && !fVerda) visible = false;
-                if (color === 'groga' && !fGroga) visible = false;
-                if (color === 'vermella' && !fVermella) visible = false;
-                if (color === 'sense_dades' && !fSenseData) visible = false;
-
-                // Filtre de Meduses
-                if (fSenseMeduses) {
-                    if (medusesText.includes('baixa') || medusesText.includes('mitjana') || medusesText.includes('alta') || 
-                        medusesText.includes('sí') || medusesText.includes('presència')) {
-                        visible = false;
-                    }
-                }
-
-                // Filtres de Serveis
-                if (fBanderaBlava && !marcador.esBanderaBlava) visible = false;
-                if (fVaters && !esCert(p.vaters)) visible = false;
-                if (fSocorristes && (!esCert(p.vigilancia) && !esCert(p.socorristes))) visible = false;
-                if (fDutxes && !esCert(p.dutxes)) visible = false;
-                if (fDiscapacitats && !esCert(p.aparcamentdiscapacitats)) visible = false;
-                if (fBars && !esCert(p.bars)) visible = false;
-                if (fMascotes && !esCert(p.mascotes)) visible = false;
-
-                if (visible) {
-                    marcador.addTo(map);
-                } else {
-                    map.removeLayer(marcador);
-                }
+                if (v) m.addTo(map); else map.removeLayer(m);
             });
         }
 
-        document.querySelectorAll('.panel-filtres input').forEach(input => {
-            input.addEventListener('change', aplicarFiltres);
-        });
+        document.querySelectorAll('.panel-contingut input').forEach(i => i.addEventListener('change', aplicarFiltres));
     </script>
 </body>
 </html>

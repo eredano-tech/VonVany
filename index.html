@@ -300,13 +300,54 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
             line-height: 1.4;
             border-left: 4px solid #3b82f6;
-            max-width: 220px;
+            max-width: 250px;
         }
 
         .info-quadre a {
             color: #2563eb;
             text-decoration: none;
             font-weight: bold;
+        }
+
+        .info-quadre a:hover {
+            text-decoration: underline;
+        }
+
+        .text-visites {
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px dashed #cbd5e1;
+            font-weight: 600;
+            color: #1e3a8a;
+        }
+
+        .text-contacte {
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px dashed #cbd5e1;
+            font-size: 10.5px;
+            color: #475569;
+        }
+
+        /* BOTÓ DE RUTA A GOOGLE MAPS */
+        .btn-gmaps {
+            display: block;
+            margin-top: 10px;
+            padding: 8px 10px;
+            background-color: #2563eb;
+            color: #ffffff !important;
+            border-radius: 6px;
+            text-decoration: none !important;
+            font-weight: bold;
+            font-size: 11px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(37, 99, 235, 0.3);
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .btn-gmaps:hover {
+            background-color: #1d4ed8;
+            transform: translateY(-1px);
         }
 
         /* ETIQUETES MAPA */
@@ -438,6 +479,10 @@
     <div class="info-quadre">
         <b>Font:</b> <a href="https://analisi.transparenciacatalunya.cat/Turisme/Estat-de-les-platges-de-Catalunya-informaci-immedi/4baz-cjv2/about_data" target="_blank">Gencat 4baz-cjv2</a><br>
         <span id="data-actualitzacio">Actualitzant...</span>
+        <div id="visites-text" class="text-visites">Comptant visites...</div>
+        <div class="text-contacte">
+            Tens algun suggeriment o vols col·laborar amb el projecte? Escriu al creador a <a href="mailto:lepremier12@hotmail.com">lepremier12@hotmail.com</a>
+        </div>
     </div>
 
     <div class="author-tag">Autor: ERT</div>
@@ -457,7 +502,50 @@
         let llistaMarcadors = [];
         let llistaMunicipis = [];
         let llistaCerca = [];
-        let platjaSeleccionada = null; // Manté referència a la platja cerada
+        let platjaSeleccionada = null;
+        let marcadorUbicacioUsuari = null;
+
+        /* OBTENIR GEOLOCALITZACIÓ DE L'USUARI (PUNT BLAU) */
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+
+                    marcadorUbicacioUsuari = L.circleMarker([lat, lng], {
+                        radius: 8,
+                        fillColor: "#2563eb",
+                        color: "#ffffff",
+                        weight: 3,
+                        opacity: 1,
+                        fillOpacity: 0.9
+                    }).addTo(map);
+
+                    marcadorUbicacioUsuari.bindTooltip("📍 La teva ubicació", {
+                        permanent: false,
+                        direction: 'top'
+                    });
+                },
+                (err) => {
+                    console.log("Geolocalització no disponible o denegada per l'usuari:", err.message);
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        }
+
+        /* LÒGICA COMPTADOR DE VISITES */
+        fetch('https://api.counterapi.dev/v1/von-vany-mapa/visites/up')
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.count !== undefined) {
+                    document.getElementById('visites-text').innerText = `Vostè és la persona número ${data.count} que visita Von Vany!`;
+                } else {
+                    document.getElementById('visites-text').style.display = 'none';
+                }
+            })
+            .catch(() => {
+                document.getElementById('visites-text').style.display = 'none';
+            });
 
         function toggleFiltres() {
             const panel = document.getElementById('panelFiltres');
@@ -605,6 +693,8 @@
                     ? `${e.temperatura_aigua} ºC` 
                     : 'N/D';
 
+                const urlGoogleMaps = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+
                 const popup = `
                     <div class="popup-title">${platja.platja}</div>
                     <b>Estat:</b> ${bIcon} ${bTxt}<br>
@@ -612,12 +702,13 @@
                     <b>🌡️ Temp. aigua:</b> ${tempAigua}<br>
                     <b>🪼 Meduses:</b> ${textMedusesMostrar}<hr>
                     <b>🔵 Bandera Blava:</b> ${esCert(platja.banderablava)?'Sí':'No'}<br>
-                    <b>🚽 Lavabos:</b> ${esCert(platja.vaters)?'Sí':'No'}<br>
+                    <b>Toilet Lavabos:</b> ${esCert(platja.vaters)?'Sí':'No'}<br>
                     <b>🛟 Vigilància:</b> ${esCert(platja.socorristes)?'Sí':'No'}<br>
                     <b>🚿 Dutxes:</b> ${esCert(platja.dutxes)?'Sí':'No'}<br>
                     <b>♿ Accés PMR:</b> ${esCert(platja.aparcamentdiscapacitats)?'Sí':'No'}<br>
                     <b>🍹 Bars:</b> ${esCert(platja.bars)?'Sí':'No'}<br>
-                    <b>🐶 Mascotes:</b> ${esCert(platja.mascotes)?'Sí':'No'}
+                    <b>🐶 Mascotes:</b> ${esCert(platja.mascotes)?'Sí':'No'}<br>
+                    <a href="${urlGoogleMaps}" target="_blank" class="btn-gmaps">🚗 Com arribar-hi (Google Maps)</a>
                     <div class="popup-date">📅 Data consulta (estat_data): ${dataPlatjaText}</div>
                 `;
 
@@ -705,7 +796,6 @@
                 if (f.bars && !esCert(d.p.bars)) v = false;
                 if (f.masc && !esCert(d.p.mascotes)) v = false;
 
-                // SI ÉS LA PLATJA SELECCIONADA PEL CERCADOR, LA MANTENIM SEMPRE VISIBLE
                 if (m === platjaSeleccionada) {
                     v = true;
                 }
@@ -762,14 +852,12 @@
             if (item.tipus === 'platja') {
                 platjaSeleccionada = item.marker;
 
-                // Activar automàticament el filtre de la bandera corresponent
                 const col = item.marker.dades.col;
                 if (col === 'verda') document.getElementById('f-verda').checked = true;
                 else if (col === 'groga') document.getElementById('f-groga').checked = true;
                 else if (col === 'vermella') document.getElementById('f-vermella').checked = true;
                 else if (col === 'sense_dades') document.getElementById('f-sense-bandera').checked = true;
 
-                // Re-aplicar filtres
                 aplicarFiltres();
 
                 map.flyTo([item.lat, item.lng], 16, { duration: 1.2 });
@@ -799,7 +887,6 @@
             }
         });
 
-        // Tancar desplegable en fer clic fora
         document.addEventListener('click', (e) => {
             if (!document.querySelector('.search-container').contains(e.target)) {
                 searchSuggestions.style.display = 'none';

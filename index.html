@@ -53,35 +53,140 @@
             left: 0;
             width: 100%;
             height: 60px;
-            background: rgba(255, 255, 255, 0.88);
+            background: rgba(255, 255, 255, 0.92);
             backdrop-filter: blur(10px);
             z-index: 2000;
             display: flex;
             align-items: center;
-            padding: 0 20px;
+            justify-content: space-between;
+            padding: 0 15px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             box-sizing: border-box;
+            gap: 10px;
         }
 
         .logo-container {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
+            flex-shrink: 0;
         }
 
         .logo-svg {
-            width: 38px;
-            height: 38px;
+            width: 36px;
+            height: 36px;
             filter: drop-shadow(0 2px 4px rgba(30, 58, 138, 0.2));
         }
 
         .app-title {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: 800;
             color: #1e3a8a;
             letter-spacing: -0.5px;
             margin: 0;
             text-transform: uppercase;
+        }
+
+        /* CERCADOR */
+        .search-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            max-width: 320px;
+            width: 100%;
+        }
+
+        .search-box {
+            display: flex;
+            width: 100%;
+            border-radius: 20px;
+            background: #f1f5f9;
+            border: 1.5px solid #cbd5e1;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .search-box:focus-within {
+            border-color: #1e3a8a;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.15);
+        }
+
+        .search-input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            padding: 7px 12px;
+            font-size: 13px;
+            outline: none;
+            color: #0f172a;
+        }
+
+        .search-btn {
+            background: transparent;
+            border: none;
+            padding: 0 12px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #1e3a8a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .search-btn:hover {
+            background: rgba(30, 58, 138, 0.08);
+        }
+
+        .search-suggestions {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            max-height: 260px;
+            overflow-y: auto;
+            display: none;
+            z-index: 3000;
+            border: 1px solid #e2e8f0;
+        }
+
+        .suggestion-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #1e293b;
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .suggestion-item:hover {
+            background-color: #eff6ff;
+            color: #1e3a8a;
+        }
+
+        .suggestion-tag {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        .suggestion-item:hover .suggestion-tag {
+            background: #3b82f6;
+            color: white;
         }
 
         /* AUTOR */
@@ -252,24 +357,26 @@
 
         @media (max-width: 600px) {
             .app-header {
-                height: 72px;
-                padding-top: max(12px, env(safe-area-inset-top));
-                align-items: center;
+                height: 65px;
+                padding: max(8px, env(safe-area-inset-top)) 10px 8px 10px;
             }
             .app-title { 
-                font-size: 18px; 
+                display: none; 
             }
             .logo-svg {
-                width: 32px;
-                height: 32px;
+                width: 30px;
+                height: 30px;
+            }
+            .search-container {
+                max-width: 100%;
             }
             .panel-filtres { 
-                top: 82px; 
+                top: 75px; 
                 right: 10px; 
                 width: 250px; 
             }
             .leaflet-top.leaflet-left { 
-                top: 82px !important; 
+                top: 75px !important; 
             }
         }
     </style>
@@ -286,6 +393,14 @@
             </svg>
             <h1 class="app-title">Von Vany</h1>
         </div>
+
+        <div class="search-container">
+            <div class="search-box">
+                <input type="text" id="searchInput" class="search-input" placeholder="Cerca platja o municipi..." autocomplete="off">
+                <button id="searchBtn" class="search-btn" title="Cercar">🔍</button>
+            </div>
+            <div id="searchSuggestions" class="search-suggestions"></div>
+        </div>
     </header>
 
     <div class="panel-filtres" id="panelFiltres">
@@ -300,9 +415,9 @@
 
             <div class="seccio-titol">Estat de la Bandera</div>
             <label class="filtre-item"><input type="checkbox" id="f-verda" checked> 🟢 Verda</label>
-            <label class="filtre-item"><input type="checkbox" id="f-groga" checked> 🟡 Groga</label>
-            <label class="filtre-item"><input type="checkbox" id="f-vermella" checked> 🔴 Vermella</label>
-            <label class="filtre-item"><input type="checkbox" id="f-sense-bandera" checked> ⚪ Sense dades</label>
+            <label class="filtre-item"><input type="checkbox" id="f-groga"> 🟡 Groga</label>
+            <label class="filtre-item"><input type="checkbox" id="f-vermella"> 🔴 Vermella</label>
+            <label class="filtre-item"><input type="checkbox" id="f-sense-bandera"> ⚪ Sense dades</label>
 
             <div class="seccio-titol">Estat del Mar</div>
             <label class="filtre-item"><input type="checkbox" id="f-sense-meduses"> 🪼 Sense meduses</label>
@@ -341,6 +456,8 @@
 
         let llistaMarcadors = [];
         let llistaMunicipis = [];
+        let llistaCerca = [];
+        let platjaSeleccionada = null; // Manté referència a la platja cerada
 
         function toggleFiltres() {
             const panel = document.getElementById('panelFiltres');
@@ -353,6 +470,11 @@
 
         function normalitzarCodi(codi) {
             return codi ? String(codi).replace(/^0+/, "").trim() : "";
+        }
+
+        function netejarText(txt) {
+            if (!txt) return "";
+            return String(txt).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
         }
 
         function netejarNomPlatja(txt) {
@@ -376,19 +498,37 @@
             return !valorsSenseMeduses.includes(s);
         }
 
-        function formatarData(dataStr) {
+        function parseDataFlexible(dataStr) {
             if (!dataStr || dataStr === 'N/A' || dataStr === 'N/D') return null;
-            const timestamp = Date.parse(dataStr);
-            if (!isNaN(timestamp)) {
-                const d = new Date(timestamp);
-                const dia = String(d.getDate()).padStart(2, '0');
-                const mes = String(d.getMonth() + 1).padStart(2, '0');
-                const any = d.getFullYear();
-                const hores = String(d.getHours()).padStart(2, '0');
-                const minuts = String(d.getMinutes()).padStart(2, '0');
-                return `${dia}/${mes}/${any} ${hores}:${minuts}`;
+            
+            let ts = Date.parse(dataStr);
+            if (!isNaN(ts)) return new Date(ts);
+
+            const str = String(dataStr).trim();
+            const match = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:[T\s](\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
+            if (match) {
+                const dia = parseInt(match[1], 10);
+                const mes = parseInt(match[2], 10) - 1;
+                const any = parseInt(match[3], 10);
+                const hores = match[4] ? parseInt(match[4], 10) : 0;
+                const minuts = match[5] ? parseInt(match[5], 10) : 0;
+                const segons = match[6] ? parseInt(match[6], 10) : 0;
+                const d = new Date(any, mes, dia, hores, minuts, segons);
+                if (!isNaN(d.getTime())) return d;
             }
-            return String(dataStr);
+
+            return null;
+        }
+
+        function formatarData(dataStr) {
+            const d = parseDataFlexible(dataStr);
+            if (!d) return null;
+            const dia = String(d.getDate()).padStart(2, '0');
+            const mes = String(d.getMonth() + 1).padStart(2, '0');
+            const any = d.getFullYear();
+            const hores = String(d.getHours()).padStart(2, '0');
+            const minuts = String(d.getMinutes()).padStart(2, '0');
+            return `${dia}/${mes}/${any} ${hores}:${minuts}`;
         }
 
         const urlEstatTempsReal = "https://analisi.transparenciacatalunya.cat/resource/4baz-cjv2.json?$limit=10000&$order=:id DESC";
@@ -401,10 +541,11 @@
             fetch(urlEquipaments).then(r => r.json()).catch(() => [])
         ]).then(([estatsTempsReal, equipaments]) => {
 
-            // ORDENACIÓ PER DATA EN JAVASCRIPT
             estatsTempsReal.sort((a, b) => {
-                const tA = Date.parse(a.estat_data || a.data_actualitzacio || a.data || 0) || 0;
-                const tB = Date.parse(b.estat_data || b.data_actualitzacio || b.data || 0) || 0;
+                const dA = parseDataFlexible(a.estat_data || a.data_actualitzacio || a.data);
+                const dB = parseDataFlexible(b.estat_data || b.data_actualitzacio || b.data);
+                const tA = dA ? dA.getTime() : 0;
+                const tB = dB ? dB.getTime() : 0;
                 return tB - tA;
             });
 
@@ -414,7 +555,7 @@
                 const rawDateGlobal = e0.estat_data || e0.data_actualitzacio || e0.data;
                 dataTextGlobal = formatarData(rawDateGlobal) || "";
             }
-            document.getElementById('data-actualitzacio').innerText = "Última act: " + (dataTextGlobal || "Avui");
+            document.getElementById('data-actualitzacio').innerText = "Última act. general: " + (dataTextGlobal || "N/D");
 
             const mapaCodi = {};
             const mapaNomNetejat = {};
@@ -434,10 +575,13 @@
                 if (isNaN(lat) || isNaN(lng)) return;
 
                 const nomMuni = platja.municipi_municipi || 'Desconegut';
-                if (!municipisAgrupats[nomMuni]) municipisAgrupats[nomMuni] = { latSum: 0, lngSum: 0, count: 0 };
+                if (!municipisAgrupats[nomMuni]) {
+                    municipisAgrupats[nomMuni] = { latSum: 0, lngSum: 0, count: 0, coords: [] };
+                }
                 municipisAgrupats[nomMuni].latSum += lat;
                 municipisAgrupats[nomMuni].lngSum += lng;
                 municipisAgrupats[nomMuni].count++;
+                municipisAgrupats[nomMuni].coords.push([lat, lng]);
 
                 const codiP = normalitzarCodi(platja.codiplatja);
                 const nomNet = netejarNomPlatja(platja.platja);
@@ -455,7 +599,7 @@
                 const textMedusesMostrar = hiHaMeduses ? `⚠️ Presència (${rawMeduses})` : '✅ Sense meduses';
 
                 const rawDatePlatja = e.estat_data || e.data_actualitzacio || e.data;
-                const dataPlatjaText = formatarData(rawDatePlatja) || dataTextGlobal || "Avui";
+                const dataPlatjaText = formatarData(rawDatePlatja) || dataTextGlobal || "N/D";
 
                 const tempAigua = (e.temperatura_aigua && e.temperatura_aigua !== 'N/A' && e.temperatura_aigua !== 'N/D') 
                     ? `${e.temperatura_aigua} ºC` 
@@ -487,13 +631,36 @@
                     blava: esCert(platja.banderablava) 
                 };
                 llistaMarcadors.push(m);
+
+                llistaCerca.push({
+                    tipus: 'platja',
+                    nom: platja.platja,
+                    nomCerca: netejarText(platja.platja),
+                    subtext: nomMuni,
+                    lat: lat,
+                    lng: lng,
+                    marker: m
+                });
             });
 
             Object.keys(municipisAgrupats).forEach(n => {
                 const i = municipisAgrupats[n];
-                const mMuni = L.marker([i.latSum/i.count, i.lngSum/i.count], { icon: iconaInvisible })
+                const latAvg = i.latSum / i.count;
+                const lngAvg = i.lngSum / i.count;
+
+                const mMuni = L.marker([latAvg, lngAvg], { icon: iconaInvisible })
                     .bindTooltip(`${n}`, { permanent: true, direction: 'top', className: 'etiqueta-municipi-nom', offset: [0,-15], interactive: false });
                 llistaMunicipis.push(mMuni);
+
+                llistaCerca.push({
+                    tipus: 'municipi',
+                    nom: n,
+                    nomCerca: netejarText(n),
+                    subtext: `${i.count} platges`,
+                    bounds: L.latLngBounds(i.coords),
+                    lat: latAvg,
+                    lng: lngAvg
+                });
             });
 
             aplicarFiltres();
@@ -538,12 +705,106 @@
                 if (f.bars && !esCert(d.p.bars)) v = false;
                 if (f.masc && !esCert(d.p.mascotes)) v = false;
 
-                // CORREGIT: m en lloc de map
+                // SI ÉS LA PLATJA SELECCIONADA PEL CERCADOR, LA MANTENIM SEMPRE VISIBLE
+                if (m === platjaSeleccionada) {
+                    v = true;
+                }
+
                 if (v) m.addTo(map); else map.removeLayer(m);
             });
         }
 
         document.querySelectorAll('.panel-contingut input').forEach(i => i.addEventListener('change', aplicarFiltres));
+
+        /* LÒGICA DEL CERCADOR I AUTOCOMPLETAT */
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const searchSuggestions = document.getElementById('searchSuggestions');
+
+        function cercarElements(query) {
+            const textLliure = netejarText(query);
+            if (!textLliure || textLliure.length < 2) {
+                searchSuggestions.style.display = 'none';
+                return [];
+            }
+
+            const resultats = llistaCerca.filter(item => item.nomCerca.includes(textLliure)).slice(0, 8);
+            mostrarSuggeriments(resultats);
+            return resultats;
+        }
+
+        function mostrarSuggeriments(resultats) {
+            if (resultats.length === 0) {
+                searchSuggestions.style.display = 'none';
+                return;
+            }
+
+            searchSuggestions.innerHTML = '';
+            resultats.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'suggestion-item';
+                const icona = item.tipus === 'platja' ? '🏖️' : '🏙️';
+                div.innerHTML = `
+                    <span>${icona} <b>${item.nom}</b> <small style="color:#64748b;">(${item.subtext})</small></span>
+                    <span class="suggestion-tag">${item.tipus}</span>
+                `;
+                div.addEventListener('click', () => seleccionarResultat(item));
+                searchSuggestions.appendChild(div);
+            });
+
+            searchSuggestions.style.display = 'block';
+        }
+
+        function seleccionarResultat(item) {
+            searchSuggestions.style.display = 'none';
+            searchInput.value = item.nom;
+
+            if (item.tipus === 'platja') {
+                platjaSeleccionada = item.marker;
+
+                // Activar automàticament el filtre de la bandera corresponent
+                const col = item.marker.dades.col;
+                if (col === 'verda') document.getElementById('f-verda').checked = true;
+                else if (col === 'groga') document.getElementById('f-groga').checked = true;
+                else if (col === 'vermella') document.getElementById('f-vermella').checked = true;
+                else if (col === 'sense_dades') document.getElementById('f-sense-bandera').checked = true;
+
+                // Re-aplicar filtres
+                aplicarFiltres();
+
+                map.flyTo([item.lat, item.lng], 16, { duration: 1.2 });
+                setTimeout(() => {
+                    item.marker.openPopup();
+                }, 1300);
+            } else if (item.tipus === 'municipi') {
+                if (item.bounds) {
+                    map.fitBounds(item.bounds, { padding: [50, 50], maxZoom: 14 });
+                } else {
+                    map.flyTo([item.lat, item.lng], 13, { duration: 1.2 });
+                }
+            }
+        }
+
+        searchInput.addEventListener('input', (e) => cercarElements(e.target.value));
+
+        searchBtn.addEventListener('click', () => {
+            const res = cercarElements(searchInput.value);
+            if (res.length > 0) seleccionarResultat(res[0]);
+        });
+
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const res = cercarElements(searchInput.value);
+                if (res.length > 0) seleccionarResultat(res[0]);
+            }
+        });
+
+        // Tancar desplegable en fer clic fora
+        document.addEventListener('click', (e) => {
+            if (!document.querySelector('.search-container').contains(e.target)) {
+                searchSuggestions.style.display = 'none';
+            }
+        });
     </script>
 </body>
 </html>

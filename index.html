@@ -40,7 +40,7 @@
             z-index: 1;
         }
 
-        /* REPOSICIONAMENT BOTONS ZOOM LEAFLET (+ i -) */
+        /* REPOSICIONAMENT BOTONS ZOOM LEAFLET */
         .leaflet-top.leaflet-left {
             top: 70px !important;
             transition: top 0.3s ease;
@@ -84,7 +84,7 @@
             text-transform: uppercase;
         }
 
-        /* AUTOR (SEPARAT D'OPENSTREETMAP) */
+        /* AUTOR */
         .author-tag {
             position: absolute;
             bottom: 28px;
@@ -204,7 +204,7 @@
             font-weight: bold;
         }
 
-        /* ETIQUETES MAPA (PLATGES I MUNICIPIS) */
+        /* ETIQUETES MAPA */
         .leaflet-tooltip.etiqueta-platja-nom {
             z-index: 650 !important;
             background: rgba(255, 255, 255, 0.95);
@@ -236,10 +236,20 @@
             font-weight: bold;
             font-size: 16px;
             color: #1e3a8a;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 4px;
         }
 
-        /* AJUSTOS ESPECÍFICS PER A MÒBILS */
+        .popup-date {
+            margin-top: 8px;
+            padding-top: 6px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 10px;
+            color: #64748b;
+            font-style: italic;
+        }
+
         @media (max-width: 600px) {
             .app-header {
                 height: 72px;
@@ -290,9 +300,9 @@
 
             <div class="seccio-titol">Estat de la Bandera</div>
             <label class="filtre-item"><input type="checkbox" id="f-verda" checked> 🟢 Verda</label>
-            <label class="filtre-item"><input type="checkbox" id="f-groga"> 🟡 Groga</label>
-            <label class="filtre-item"><input type="checkbox" id="f-vermella"> 🔴 Vermella</label>
-            <label class="filtre-item"><input type="checkbox" id="f-sense-bandera"> ⚪ Sense dades</label>
+            <label class="filtre-item"><input type="checkbox" id="f-groga" checked> 🟡 Groga</label>
+            <label class="filtre-item"><input type="checkbox" id="f-vermella" checked> 🔴 Vermella</label>
+            <label class="filtre-item"><input type="checkbox" id="f-sense-bandera" checked> ⚪ Sense dades</label>
 
             <div class="seccio-titol">Estat del Mar</div>
             <label class="filtre-item"><input type="checkbox" id="f-sense-meduses"> 🪼 Sense meduses</label>
@@ -305,6 +315,8 @@
             <label class="filtre-item"><input type="checkbox" id="f-discapacitats"> ♿ Accés PMR</label>
             <label class="filtre-item"><input type="checkbox" id="f-bars"> 🍹 Bars</label>
             <label class="filtre-item"><input type="checkbox" id="f-mascotes"> 🐶 Mascotes</label>
+            
+            <div style="height: 25px;"></div>
         </div>
     </div>
 
@@ -351,51 +363,62 @@
         }
 
         function esCert(valor) {
+            if (!valor) return false;
             const s = String(valor).toLowerCase().trim();
+            if (['n/a', 'n/d', 'no', 'false', '0', 'cap', 'sense dades', ''].includes(s)) return false;
             return s === 'cert' || s === 'si' || s === 'sí' || s === 'true' || s === '1';
         }
 
-        // DESCARREGA LES DADES MÉS RECENTS EN PRIMER LLOC ($order=:id DESC)
+        function teMeduses(txt) {
+            if (!txt) return false;
+            const s = String(txt).toLowerCase().trim();
+            const valorsSenseMeduses = ['n/a', 'n/d', 'sense dades', 'cap', 'no', 'sense meduses', 'cap observació', 'sense observacions', 'nul·la', 'null', 'undefined', '-', ''];
+            return !valorsSenseMeduses.includes(s);
+        }
+
+        function formatarData(dataStr) {
+            if (!dataStr || dataStr === 'N/A' || dataStr === 'N/D') return null;
+            const timestamp = Date.parse(dataStr);
+            if (!isNaN(timestamp)) {
+                const d = new Date(timestamp);
+                const dia = String(d.getDate()).padStart(2, '0');
+                const mes = String(d.getMonth() + 1).padStart(2, '0');
+                const any = d.getFullYear();
+                const hores = String(d.getHours()).padStart(2, '0');
+                const minuts = String(d.getMinutes()).padStart(2, '0');
+                return `${dia}/${mes}/${any} ${hores}:${minuts}`;
+            }
+            return String(dataStr);
+        }
+
         const urlEstatTempsReal = "https://analisi.transparenciacatalunya.cat/resource/4baz-cjv2.json?$limit=10000&$order=:id DESC";
         const urlEquipaments = "https://analisi.transparenciacatalunya.cat/resource/wcxa-38q9.json?$limit=10000";
-        const urlMetadata = "https://analisi.transparenciacatalunya.cat/api/views/4baz-cjv2.json";
 
         const iconaInvisible = L.divIcon({ className: 'icona-invisible', html: '', iconSize: [0, 0] });
 
         Promise.all([
             fetch(urlEstatTempsReal).then(r => r.json()).catch(() => []),
-            fetch(urlEquipaments).then(r => r.json()).catch(() => []),
-            fetch(urlMetadata).then(r => r.json()).catch(() => null)
-        ]).then(([estatsTempsReal, equipaments, metadata]) => {
+            fetch(urlEquipaments).then(r => r.json()).catch(() => [])
+        ]).then(([estatsTempsReal, equipaments]) => {
 
-            // CÀLCUL CORRECTE DE LA DATA D'ACTUALITZACIÓ
-            let dataText = "";
+            // ORDENACIÓ PER DATA EN JAVASCRIPT
+            estatsTempsReal.sort((a, b) => {
+                const tA = Date.parse(a.estat_data || a.data_actualitzacio || a.data || 0) || 0;
+                const tB = Date.parse(b.estat_data || b.data_actualitzacio || b.data || 0) || 0;
+                return tB - tA;
+            });
+
+            let dataTextGlobal = "";
             if (estatsTempsReal && estatsTempsReal.length > 0) {
                 const e0 = estatsTempsReal[0];
-                const dataCamp = e0.data_actualitzacio || e0.data || e0.data_hora;
-                if (dataCamp) {
-                    const d = new Date(dataCamp);
-                    if (!isNaN(d.getTime())) {
-                        dataText = d.toLocaleString('ca-ES', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
-                    }
-                }
+                const rawDateGlobal = e0.estat_data || e0.data_actualitzacio || e0.data;
+                dataTextGlobal = formatarData(rawDateGlobal) || "";
             }
-            if (!dataText && metadata) {
-                let ts = metadata.rowsUpdatedAt || metadata.dataUpdatedAt;
-                if (ts) {
-                    if (typeof ts === 'number' && ts < 1e11) ts = ts * 1000; // Converteix segons a mil·lisegons
-                    const d = new Date(ts);
-                    if (!isNaN(d.getTime())) {
-                        dataText = d.toLocaleString('ca-ES', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
-                    }
-                }
-            }
-            document.getElementById('data-actualitzacio').innerText = "Última act: " + (dataText || "Desconeguda");
+            document.getElementById('data-actualitzacio').innerText = "Última act: " + (dataTextGlobal || "Avui");
 
-            // COM QUE ARA DESCARREGUEM DE MÉS RECENT A MÉS ANTIC,
-            // NOMÉS RECOLLIM EL PRIMER REGISTRE QUE TROBEM DE CADA PLATJA.
             const mapaCodi = {};
             const mapaNomNetejat = {};
+            
             estatsTempsReal.forEach(e => {
                 const codi = normalitzarCodi(e.codi_platja || e.codiplatja);
                 if (codi && !mapaCodi[codi]) mapaCodi[codi] = e;
@@ -427,26 +450,45 @@
                 else if (rawB === 'groga') { bCol = 'groga'; bIcon = '🟡'; bTxt = 'GROGA'; }
                 else if (rawB === 'vermella') { bCol = 'vermella'; bIcon = '🔴'; bTxt = 'VERMELLA'; }
 
-                const med = e.presencia_meduses || e.estat_meduses || 'Sense dades';
+                const rawMeduses = e.presencia_meduses || e.estat_meduses || 'N/A';
+                const hiHaMeduses = teMeduses(rawMeduses);
+                const textMedusesMostrar = hiHaMeduses ? `⚠️ Presència (${rawMeduses})` : '✅ Sense meduses';
+
+                const rawDatePlatja = e.estat_data || e.data_actualitzacio || e.data;
+                const dataPlatjaText = formatarData(rawDatePlatja) || dataTextGlobal || "Avui";
+
+                const tempAigua = (e.temperatura_aigua && e.temperatura_aigua !== 'N/A' && e.temperatura_aigua !== 'N/D') 
+                    ? `${e.temperatura_aigua} ºC` 
+                    : 'N/D';
+
                 const popup = `
                     <div class="popup-title">${platja.platja}</div>
                     <b>Estat:</b> ${bIcon} ${bTxt}<br>
                     <i>${e.bandera_motiubandera || 'Sense incidències'}</i><hr>
-                    <b>🌡️ Temp:</b> ${e.temperatura_aigua || 'N/D'} ºC<br>
-                    <b>🪼 Meduses:</b> ${med}<br><hr>
-                    <b>🔵 B. Blava:</b> ${esCert(platja.banderablava)?'Sí':'No'}<br>
-                    <b>Toilet Lavabos:</b> ${esCert(platja.vaters)?'Sí':'No'} | <b>🛟 Vigilància:</b> ${esCert(platja.socorristes)?'Sí':'No'}<br>
+                    <b>🌡️ Temp. aigua:</b> ${tempAigua}<br>
+                    <b>🪼 Meduses:</b> ${textMedusesMostrar}<hr>
+                    <b>🔵 Bandera Blava:</b> ${esCert(platja.banderablava)?'Sí':'No'}<br>
+                    <b>🚽 Lavabos:</b> ${esCert(platja.vaters)?'Sí':'No'}<br>
+                    <b>🛟 Vigilància:</b> ${esCert(platja.socorristes)?'Sí':'No'}<br>
+                    <b>🚿 Dutxes:</b> ${esCert(platja.dutxes)?'Sí':'No'}<br>
+                    <b>♿ Accés PMR:</b> ${esCert(platja.aparcamentdiscapacitats)?'Sí':'No'}<br>
+                    <b>🍹 Bars:</b> ${esCert(platja.bars)?'Sí':'No'}<br>
                     <b>🐶 Mascotes:</b> ${esCert(platja.mascotes)?'Sí':'No'}
+                    <div class="popup-date">📅 Data consulta (estat_data): ${dataPlatjaText}</div>
                 `;
 
                 const m = L.marker([lat, lng], { icon: iconaInvisible }).bindPopup(popup);
                 m.bindTooltip(`${bIcon} ${platja.platja}`, { permanent: true, direction: 'center', className: 'etiqueta-platja-nom', interactive: true });
 
-                m.dades = { p: platja, col: bCol, med: med.toLowerCase(), blava: esCert(platja.banderablava) };
+                m.dades = { 
+                    p: platja, 
+                    col: bCol, 
+                    hiHaMeduses: hiHaMeduses, 
+                    blava: esCert(platja.banderablava) 
+                };
                 llistaMarcadors.push(m);
             });
 
-            // CREACIÓ DE MUNICIPIS
             Object.keys(municipisAgrupats).forEach(n => {
                 const i = municipisAgrupats[n];
                 const mMuni = L.marker([i.latSum/i.count, i.lngSum/i.count], { icon: iconaInvisible })
@@ -454,7 +496,6 @@
                 llistaMunicipis.push(mMuni);
             });
 
-            // Aplicar filtres inicials
             aplicarFiltres();
         });
 
@@ -486,7 +527,9 @@
                 if (d.col === 'groga' && !f.groga) v = false;
                 if (d.col === 'vermella' && !f.vermella) v = false;
                 if (d.col === 'sense_dades' && !f.sense) v = false;
-                if (f.noMed && (d.med.includes('sí') || d.med.includes('alta') || d.med.includes('mitjana'))) v = false;
+                
+                if (f.noMed && d.hiHaMeduses) v = false;
+                
                 if (f.blava && !d.blava) v = false;
                 if (f.vaters && !esCert(d.p.vaters)) v = false;
                 if (f.socors && !esCert(d.p.socorristes)) v = false;
@@ -495,6 +538,7 @@
                 if (f.bars && !esCert(d.p.bars)) v = false;
                 if (f.masc && !esCert(d.p.mascotes)) v = false;
 
+                // CORREGIT: m en lloc de map
                 if (v) m.addTo(map); else map.removeLayer(m);
             });
         }

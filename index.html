@@ -26,27 +26,62 @@
             top: 15px;
             right: 15px;
             z-index: 1000;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.96);
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            max-width: 290px;
+            width: 280px;
             max-height: 85vh;
-            overflow-y: auto;
             backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+            overflow: hidden;
         }
 
-        .panel-filtres h3 {
-            margin: 0 0 10px 0;
-            font-size: 15px;
-            color: #1e3a8a;
-            border-bottom: 2px solid #3b82f6;
-            padding-bottom: 5px;
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: #1e3a8a;
+            color: white;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .panel-header h3 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .btn-toggle-filtres {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .panel-contingut {
+            padding: 15px;
+            max-height: calc(85vh - 50px);
+            overflow-y: auto;
+        }
+
+        /* Estat plegat */
+        .panel-filtres.plegat .panel-contingut {
+            display: none;
+        }
+
+        .panel-filtres.plegat {
+            width: auto;
+            border-radius: 8px;
         }
 
         .seccio-titol {
             font-weight: bold;
-            font-size: 12px;
+            font-size: 11px;
             color: #64748b;
             margin: 10px 0 5px 0;
             text-transform: uppercase;
@@ -71,17 +106,18 @@
         /* Quadre informatiu sobreimprès */
         .info-quadre {
             position: absolute;
-            bottom: 25px;
+            bottom: 20px;
             left: 15px;
             z-index: 1000;
             background: rgba(255, 255, 255, 0.95);
-            padding: 10px 14px;
+            padding: 8px 12px;
             border-radius: 8px;
             font-size: 11px;
             color: #334155;
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
             line-height: 1.4;
             border-left: 4px solid #3b82f6;
+            max-width: 250px;
         }
 
         .info-quadre a {
@@ -90,7 +126,7 @@
             font-weight: bold;
         }
 
-        /* Estil de les etiquetes de la platja */
+        /* Estil de les etiquetes de les platges */
         .etiqueta-platja-nom {
             background: rgba(255, 255, 255, 0.95);
             border: 2px solid #2563eb;
@@ -98,15 +134,26 @@
             color: #0f172a;
             font-weight: bold;
             font-size: 11px;
-            padding: 3px 8px;
+            padding: 2px 6px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.25);
             cursor: pointer;
             white-space: nowrap;
         }
 
-        .etiqueta-platja-nom:hover {
-            background: #eff6ff;
-            border-color: #1d4ed8;
+        /* Estil de les etiquetes dels municipis */
+        .etiqueta-municipi-nom {
+            background: rgba(241, 245, 249, 0.85);
+            border: 1px dashed #475569;
+            border-radius: 4px;
+            color: #334155;
+            font-weight: 700;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 1px 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+            pointer-events: none;
+            white-space: nowrap;
         }
 
         .popup-title {
@@ -130,26 +177,31 @@
 </head>
 <body>
 
-    <div class="panel-filtres">
-        <h3>🔍 Filtres de Platja</h3>
-        
-        <div class="seccio-titol">Estat de la Bandera</div>
-        <label class="filtre-item"><input type="checkbox" id="f-verda" checked> 🟢 Bandera Verda</label>
-        <label class="filtre-item"><input type="checkbox" id="f-groga" checked> 🟡 Bandera Groga</label>
-        <label class="filtre-item"><input type="checkbox" id="f-vermella" checked> 🔴 Bandera Vermella</label>
-        <label class="filtre-item"><input type="checkbox" id="f-sense-bandera" checked> ⚪ Sense dades de bandera</label>
+    <div class="panel-filtres" id="panelFiltres">
+        <div class="panel-header" onclick="toggleFiltres()">
+            <h3>🔍 Filtres de Platja</h3>
+            <button class="btn-toggle-filtres" id="btnToggle">▲ Plegar</button>
+        </div>
 
-        <div class="seccio-titol">Estat del Mar</div>
-        <label class="filtre-item"><input type="checkbox" id="f-sense-meduses"> 🪼 Només sense meduses</label>
+        <div class="panel-contingut">
+            <div class="seccio-titol">Estat de la Bandera</div>
+            <label class="filtre-item"><input type="checkbox" id="f-verda" checked> 🟢 Bandera Verda</label>
+            <label class="filtre-item"><input type="checkbox" id="f-groga" checked> 🟡 Bandera Groga</label>
+            <label class="filtre-item"><input type="checkbox" id="f-vermella" checked> 🔴 Bandera Vermella</label>
+            <label class="filtre-item"><input type="checkbox" id="f-sense-bandera" checked> ⚪ Sense dades de bandera</label>
 
-        <div class="seccio-titol">Equipaments i Serveis</div>
-        <label class="filtre-item"><input type="checkbox" id="f-banderablava"> 🔵 Bandera Blava</label>
-        <label class="filtre-item"><input type="checkbox" id="f-vaters"> 🚽 Lavabos</label>
-        <label class="filtre-item"><input type="checkbox" id="f-socorristes"> 🛟 Socorristes / Vigilància</label>
-        <label class="filtre-item"><input type="checkbox" id="f-dutxes"> 🚿 Dutxes</label>
-        <label class="filtre-item"><input type="checkbox" id="f-discapacitats"> ♿ Aparcament Discapacitats</label>
-        <label class="filtre-item"><input type="checkbox" id="f-bars"> 🍹 Bars / Xiringuitos</label>
-        <label class="filtre-item"><input type="checkbox" id="f-mascotes"> 🐶 Bany permès a Mascotes</label>
+            <div class="seccio-titol">Estat del Mar</div>
+            <label class="filtre-item"><input type="checkbox" id="f-sense-meduses"> 🪼 Només sense meduses</label>
+
+            <div class="seccio-titol">Equipaments i Serveis</div>
+            <label class="filtre-item"><input type="checkbox" id="f-banderablava"> 🔵 Bandera Blava</label>
+            <label class="filtre-item"><input type="checkbox" id="f-vaters"> 🚽 Lavabos</label>
+            <label class="filtre-item"><input type="checkbox" id="f-socorristes"> 🛟 Socorristes / Vigilància</label>
+            <label class="filtre-item"><input type="checkbox" id="f-dutxes"> 🚿 Dutxes</label>
+            <label class="filtre-item"><input type="checkbox" id="f-discapacitats"> ♿ Aparcament Discapacitats</label>
+            <label class="filtre-item"><input type="checkbox" id="f-bars"> 🍹 Bars / Xiringuitos</label>
+            <label class="filtre-item"><input type="checkbox" id="f-mascotes"> 🐶 Bany permès a Mascotes</label>
+        </div>
     </div>
 
     <div class="info-quadre">
@@ -162,6 +214,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
+        // Inicialització del mapa
         const map = L.map('map').setView([41.3851, 2.1734], 9);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -170,6 +223,24 @@
         }).addTo(map);
 
         let llistaMarcadors = [];
+
+        // Funcions per plega / desplegar panell de filtres
+        function toggleFiltres() {
+            const panel = document.getElementById('panelFiltres');
+            const btn = document.getElementById('btnToggle');
+            
+            panel.classList.toggle('plegat');
+            if (panel.classList.contains('plegat')) {
+                btn.innerText = '▼ Filtres';
+            } else {
+                btn.innerText = '▲ Plegar';
+            }
+        }
+
+        // Si és un dispositiu mòbil (pantalla petita), inicia amb els filtres plegats
+        if (window.innerWidth < 768) {
+            toggleFiltres();
+        }
 
         // Funcions auxiliars de neteja
         function normalitzarCodi(codi) {
@@ -220,7 +291,7 @@
             fetch(urlMetadata).then(r => r.json()).catch(() => null)
         ]).then(([estatsTempsReal, equipaments, metadata]) => {
 
-            // Data d'actualització des de les metadades de la web (about_data)
+            // Data d'actualització de les metadades
             let dataActualitzacioText = "No disponible";
             if (metadata) {
                 const tsMeta = metadata.rowsUpdatedAt || metadata.dataUpdatedAt || metadata.indexUpdatedAt;
@@ -238,7 +309,7 @@
 
             document.getElementById('data-actualitzacio').innerText = "Última actualització: " + dataActualitzacioText;
 
-            // Indexació del dataset en temps real
+            // Indexació de dades en temps real
             const mapaCodi = {};
             const mapaNomNetejat = {};
 
@@ -251,6 +322,9 @@
                 if (nomNetejat) mapaNomNetejat[nomNetejat] = e;
             });
 
+            // Agrupació per calcular el centre de cada Municipi
+            const municipisAgrupats = {};
+
             // Processar platges
             equipaments.forEach(platja => {
                 const lat = parseFloat(platja.coordenada_x);
@@ -258,6 +332,16 @@
 
                 if (!isNaN(lat) && !isNaN(lng)) {
                     
+                    // Afegir dades per calcular centre del municipi
+                    const nomMunicipi = platja.municipi_municipi || 'Desconegut';
+                    if (!municipisAgrupats[nomMunicipi]) {
+                        municipisAgrupats[nomMunicipi] = { latSum: 0, lngSum: 0, count: 0 };
+                    }
+                    municipisAgrupats[nomMunicipi].latSum += lat;
+                    municipisAgrupats[nomMunicipi].lngSum += lng;
+                    municipisAgrupats[nomMunicipi].count += 1;
+
+                    // Cerca coincidència en temps real
                     const codiP = normalitzarCodi(platja.codiplatja || platja.codi_platja);
                     const nomNet = netejarNomPlatja(platja.platja);
 
@@ -276,7 +360,7 @@
 
                     if (!dadaDinamica) dadaDinamica = {};
 
-                    // --- LECTURA DE LA VARIABLE BANDERA_ESTAT ---
+                    // Lectura bandera_estat
                     const rawBandera = String(dadaDinamica.bandera_estat || dadaDinamica.estat_bandera || '').toLowerCase().trim();
 
                     let banderaEstat = 'sense_dades';
@@ -299,16 +383,14 @@
                         textBandera = rawBandera.toUpperCase();
                     }
 
-                    // --- LECTURA DE LA VARIABLE BANDERABLAVA ---
                     const esBanderaBlava = esCert(platja.banderablava);
-
                     const motiuBandera = dadaDinamica.bandera_motiubandera || dadaDinamica.estat_motiubandera || 'Sense incidències destacades';
                     const tempRaw = dadaDinamica.temperatura_aigua || dadaDinamica.estat_temperatura;
                     const temperatura = (tempRaw !== undefined && tempRaw !== null && tempRaw !== '') ? `${tempRaw} ºC` : 'No disponible';
                     const transparencia = dadaDinamica.transparencia_aigua || dadaDinamica.estat_transparenciaaigua || 'No disponible';
                     const meduses = dadaDinamica.presencia_meduses || dadaDinamica.estat_meduses || 'Sense dades';
 
-                    // Popup informatiu
+                    // Popup
                     const contingutPopup = `
                         <div class="popup-title">${platja.platja}</div>
                         <b>Municipi:</b> ${platja.municipi_municipi}<br>
@@ -321,9 +403,9 @@
                         <b>🪼 Meduses:</b> ${meduses}<br>
                         <hr style="margin:6px 0;">
                         <b>🔵 Bandera Blava:</b> ${esBanderaBlava ? 'Sí' : 'No'}<br>
-                        <b>🚽 Lavabos:</b> ${esCert(platja.vaters) ? 'Sí' : 'No'}<br>
+                        <b>Toilet Lavabos:</b> ${esCert(platja.vaters) ? 'Sí' : 'No'}<br>
                         <b>🛟 Socorristes:</b> ${esCert(platja.vigilancia) || esCert(platja.socorristes) ? 'Sí' : 'No'}<br>
-                        <b>Dutxes:</b> ${esCert(platja.dutxes) ? 'Sí' : 'No'}<br>
+                        <b>🚿 Dutxes:</b> ${esCert(platja.dutxes) ? 'Sí' : 'No'}<br>
                         <b>♿ Aparcament PMR:</b> ${esCert(platja.aparcamentdiscapacitats) ? 'Sí' : 'No'}<br>
                         <b>🍹 Bars:</b> ${esCert(platja.bars) ? 'Sí' : 'No'}<br>
                         <b>🐶 Mascotes:</b> ${esCert(platja.mascotes) ? 'Sí' : 'No'}
@@ -332,7 +414,7 @@
                     const marcador = L.marker([lat, lng], { icon: iconaInvisible });
                     marcador.bindPopup(contingutPopup);
 
-                    // Etiqueta al mapa que inclou la icona del color de la bandera
+                    // Etiqueta de la platja
                     marcador.bindTooltip(`${iconaBandera} ${platja.platja}`, {
                         permanent: true,
                         direction: 'center',
@@ -349,6 +431,27 @@
                     llistaMarcadors.push(marcador);
                 }
             });
+
+            // --- AFEDIR ETIQUETES DE MUNICIPIS AL MAPA ---
+            Object.keys(municipisAgrupats).forEach(nomMuni => {
+                const item = municipisAgrupats[nomMuni];
+                if (item.count > 0) {
+                    const latCentre = item.latSum / item.count;
+                    const lngCentre = item.lngSum / item.count;
+
+                    // Marker discret pel nom del municipi
+                    const mMarker = L.marker([latCentre, lngCentre], { icon: iconaInvisible });
+                    mMarker.bindTooltip(`${nomMuni}`, {
+                        permanent: true,
+                        direction: 'top',
+                        className: 'etiqueta-municipi-nom',
+                        offset: [0, -15],
+                        interactive: false
+                    });
+                    mMarker.addTo(map);
+                }
+            });
+
         }).catch(err => {
             console.error("Error carregant les dades:", err);
             document.getElementById('data-actualitzacio').innerText = "Error en carregar les dades";
@@ -377,7 +480,7 @@
                 const medusesText = String(marcador.medusesVal).toLowerCase();
                 let visible = true;
 
-                // Filtre de Bandera
+                // Filtres de Bandera
                 if (color === 'verda' && !fVerda) visible = false;
                 if (color === 'groga' && !fGroga) visible = false;
                 if (color === 'vermella' && !fVermella) visible = false;

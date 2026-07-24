@@ -19,6 +19,9 @@
     <meta property="og:description" content="Consulta l'estat de les platges en temps real (banderes, meduses, temperatura de l'aigua i serveis). Creat per ERT." />
     <meta property="og:url" content="https://eredano-tech.github.io/VonVany/" />
     <meta property="og:image" content="https://eredano-tech.github.io/VonVany/preview.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
@@ -352,7 +355,8 @@
             return s === 'cert' || s === 'si' || s === 'sí' || s === 'true' || s === '1';
         }
 
-        const urlEstatTempsReal = "https://analisi.transparenciacatalunya.cat/resource/4baz-cjv2.json?$limit=10000";
+        // DESCARREGA LES DADES MÉS RECENTS EN PRIMER LLOC ($order=:id DESC)
+        const urlEstatTempsReal = "https://analisi.transparenciacatalunya.cat/resource/4baz-cjv2.json?$limit=10000&$order=:id DESC";
         const urlEquipaments = "https://analisi.transparenciacatalunya.cat/resource/wcxa-38q9.json?$limit=10000";
         const urlMetadata = "https://analisi.transparenciacatalunya.cat/api/views/4baz-cjv2.json";
 
@@ -364,19 +368,40 @@
             fetch(urlMetadata).then(r => r.json()).catch(() => null)
         ]).then(([estatsTempsReal, equipaments, metadata]) => {
 
-            if (metadata) {
-                const ts = metadata.rowsUpdatedAt || metadata.dataUpdatedAt;
-                const d = new Date(ts);
-                document.getElementById('data-actualitzacio').innerText = "Última act: " + d.toLocaleString('ca-ES', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+            // CÀLCUL CORRECTE DE LA DATA D'ACTUALITZACIÓ
+            let dataText = "";
+            if (estatsTempsReal && estatsTempsReal.length > 0) {
+                const e0 = estatsTempsReal[0];
+                const dataCamp = e0.data_actualitzacio || e0.data || e0.data_hora;
+                if (dataCamp) {
+                    const d = new Date(dataCamp);
+                    if (!isNaN(d.getTime())) {
+                        dataText = d.toLocaleString('ca-ES', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+                    }
+                }
             }
+            if (!dataText && metadata) {
+                let ts = metadata.rowsUpdatedAt || metadata.dataUpdatedAt;
+                if (ts) {
+                    if (typeof ts === 'number' && ts < 1e11) ts = ts * 1000; // Converteix segons a mil·lisegons
+                    const d = new Date(ts);
+                    if (!isNaN(d.getTime())) {
+                        dataText = d.toLocaleString('ca-ES', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+                    }
+                }
+            }
+            document.getElementById('data-actualitzacio').innerText = "Última act: " + (dataText || "Desconeguda");
 
+            // COM QUE ARA DESCARREGUEM DE MÉS RECENT A MÉS ANTIC,
+            // NOMÉS RECOLLIM EL PRIMER REGISTRE QUE TROBEM DE CADA PLATJA.
             const mapaCodi = {};
             const mapaNomNetejat = {};
             estatsTempsReal.forEach(e => {
                 const codi = normalitzarCodi(e.codi_platja || e.codiplatja);
-                if (codi) mapaCodi[codi] = e;
+                if (codi && !mapaCodi[codi]) mapaCodi[codi] = e;
+                
                 const nom = netejarNomPlatja(e.platja);
-                if (nom) mapaNomNetejat[nom] = e;
+                if (nom && !mapaNomNetejat[nom]) mapaNomNetejat[nom] = e;
             });
 
             const municipisAgrupats = {};

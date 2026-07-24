@@ -3,8 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Von Vany - Mapa de Platges</title>
     
+    <title>Von Vany - Mapa de Platges</title>
+    <meta name="description" content="Estat de les platges de Catalunya en temps real: banderes, meduses, temperatura de l'aigua i equipaments. Creat per ERT." />
+    <meta name="author" content="ERT" />
+
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='70' cy='30' r='15' fill='%23FDE047'/%3E%3Cpath d='M50 10 C35 10 25 22 25 35 C25 55 50 85 50 85 C50 85 75 55 75 35 C75 22 65 10 50 10 Z' fill='%231e3a8a'/%3E%3Ccircle cx='50' cy='35' r='8' fill='white'/%3E%3Cpath d='M10 80 Q 30 70 50 80 T 90 80' stroke='%233b82f6' stroke-width='6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Von Vany" />
+    <meta name="theme-color" content="#1e3a8a" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Von Vany" />
+    <meta property="og:title" content="Von Vany 🏖️ Mapa de Platges de Catalunya" />
+    <meta property="og:description" content="Consulta l'estat de les platges en temps real (banderes, meduses, temperatura de l'aigua i serveis). Creat per ERT." />
+    <meta property="og:url" content="https://eredano-tech.github.io/VonVany/" />
+    <meta property="og:image" content="https://eredano-tech.github.io/VonVany/preview.png" />
+
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <style>
@@ -66,7 +81,7 @@
             text-transform: uppercase;
         }
 
-        /* AUTOR (PUJAT PER EVITAR SOLAPAMENT AMB OPENSTREETMAP) */
+        /* AUTOR (SEPARAT D'OPENSTREETMAP) */
         .author-tag {
             position: absolute;
             bottom: 28px;
@@ -414,7 +429,7 @@
                 llistaMunicipis.push(mMuni);
             });
 
-            // Aplicar els filtres inicials un cop carregat tot
+            // Aplicar filtres inicials
             aplicarFiltres();
         });
 

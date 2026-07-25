@@ -343,18 +343,34 @@
             color: #475569;
         }
 
-        .btn-gmaps {
-            display: block;
+        .popup-actions {
+            display: flex;
+            gap: 6px;
             margin-top: 8px;
-            padding: 7px 10px;
-            background-color: #2563eb;
-            color: #ffffff !important;
+        }
+
+        .btn-popup {
+            flex: 1;
+            padding: 7px 6px;
             border-radius: 8px;
             text-decoration: none !important;
             font-weight: bold;
-            font-size: 12px;
+            font-size: 11px;
             text-align: center;
-            box-shadow: 0 2px 5px rgba(37, 99, 235, 0.25);
+            color: #ffffff !important;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .btn-gmaps {
+            background-color: #2563eb;
+        }
+
+        .btn-webcam {
+            background-color: #0284c7;
         }
 
         .leaflet-popup-content-wrapper {
@@ -373,40 +389,34 @@
         }
 
         .leaflet-popup-content hr {
-            margin: 5px 0;
+            margin: 6px 0;
             border: 0;
             border-top: 1px solid #e2e8f0;
         }
 
-        details.popup-desplegable {
-            margin: 6px 0;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            background: #f8fafc;
-            overflow: hidden;
+        .popup-header {
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 5px;
+            margin-bottom: 6px;
         }
 
-        details.popup-desplegable summary {
-            padding: 5px 8px;
-            font-weight: bold;
+        .popup-title {
+            font-weight: 800;
+            font-size: 14.5px;
             color: #1e3a8a;
-            cursor: pointer;
-            background: #eff6ff;
-            font-size: 11.5px;
-            user-select: none;
-            outline: none;
+            display: block;
+            line-height: 1.2;
+            margin-bottom: 4px;
         }
 
-        details.popup-desplegable summary:hover {
-            background: #dbeafe;
-        }
-
-        .popup-desplegable-content {
-            padding: 6px 8px;
+        .popup-subbadge {
             font-size: 11px;
+            font-weight: 700;
             color: #334155;
-            border-top: 1px solid #e2e8f0;
-            line-height: 1.4;
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
         }
 
         .leaflet-tooltip.etiqueta-platja-nom {
@@ -435,15 +445,6 @@
             padding: 1px 5px;
             pointer-events: none;
             white-space: nowrap;
-        }
-
-        .popup-title {
-            font-weight: bold;
-            font-size: 14.5px;
-            color: #1e3a8a;
-            margin-bottom: 4px;
-            border-bottom: 2px solid #e2e8f0;
-            padding-bottom: 3px;
         }
 
         .popup-date {
@@ -1004,33 +1005,35 @@
                 const estatMarText = obtenirEstatMar(e);
                 const qualitatAiguaText = obtenirQualitatAigua(e);
 
-                const urlGoogleMaps = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+                const urlGoogleMaps = `https://www.google.com/maps?q=${lat},${lng}`;
+                const urlWebcam = `https://www.windy.com/?webcams,${lat},${lng},14`;
+
+                const teBanderaBlava = esCert(platja.banderablava);
+                const textBanderaBlava = teBanderaBlava ? ' | 🔵 Bandera Blava' : '';
 
                 const popup = `
-                    <div class="popup-title">${platja.platja}</div>
-                    <b>Estat:</b> ${bIcon} ${bTxt}<br>
-                    <i>${e.bandera_motiubandera || e.motiu_bandera || 'Sense incidències'}</i><hr>
-                    <b>🌊 Temp. aigua:</b> ${tempAigua}<br>
-                    <b>🌡️ Temp. ambient:</b> ${tempAmbient}<br>
-                    <b>🪼 Meduses:</b> ${textMedusesMostrar}<hr>
+                    <div class="popup-header">
+                        <span class="popup-title">${platja.platja}</span>
+                        <span class="popup-subbadge">${bIcon} ${bTxt}${textBanderaBlava}</span>
+                    </div>
 
-                    <details class="popup-desplegable">
-                        <summary>🌊 Més informació marítima</summary>
-                        <div class="popup-desplegable-content">
-                            <b>🌊 Estat de la mar:</b> ${estatMarText}<br>
-                            <b>💧 Qualitat de l'aigua:</b> ${qualitatAiguaText}
-                        </div>
-                    </details>
+                    <b>🌊 Estat de la mar:</b> ${estatMarText}<br>
+                    <b>🪼 Meduses:</b> ${textMedusesMostrar}<br>
+                    <b>🌡️ Ambient:</b> ${tempAmbient}  |  <b>🌊 Aigua:</b> ${tempAigua}<br>
+                    <b>💧 Qualitat aigua:</b> ${qualitatAiguaText}
                     <hr>
 
-                    <b>🔵 Bandera Blava:</b> ${esCert(platja.banderablava)?'Sí':'No'}<br>
-                    <b>Toilet Lavabos:</b> ${esCert(platja.vaters)?'Sí':'No'}<br>
+                    <b>🚽 Lavabos:</b> ${esCert(platja.vaters)?'Sí':'No'}<br>
                     <b>🛟 Vigilància:</b> ${esCert(platja.socorristes)?'Sí':'No'}<br>
                     <b>🚿 Dutxes:</b> ${esCert(platja.dutxes)?'Sí':'No'}<br>
                     <b>♿ Accés PMR:</b> ${esCert(platja.aparcamentdiscapacitats)?'Sí':'No'}<br>
                     <b>🍹 Bars:</b> ${esCert(platja.bars)?'Sí':'No'}<br>
                     <b>🐶 Mascotes:</b> ${esCert(platja.mascotes)?'Sí':'No'}<br>
-                    <a href="${urlGoogleMaps}" target="_blank" class="btn-gmaps">🚗 Com arribar-hi (Google Maps)</a>
+
+                    <div class="popup-actions">
+                        <a href="${urlWebcam}" target="_blank" rel="noopener" class="btn-popup btn-webcam">📹 Windy WebCam</a>
+                        <a href="${urlGoogleMaps}" target="_blank" rel="noopener" class="btn-popup btn-gmaps">🚗 Com arribar-hi</a>
+                    </div>
                     <div class="popup-date">📅 Consultat: ${dataPlatjaText}</div>
                 `;
 
@@ -1053,7 +1056,7 @@
                     p: platja, 
                     col: bCol, 
                     hiHaMeduses: hiHaMeduses, 
-                    blava: esCert(platja.banderablava) 
+                    blava: teBanderaBlava 
                 };
                 llistaMarcadors.push(m);
 

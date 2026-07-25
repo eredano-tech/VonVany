@@ -43,13 +43,11 @@
             background-color: #aad3df;
         }
 
-        /* REPOSICIONAMENT BOTONS ZOOM LEAFLET */
         .leaflet-top.leaflet-left {
             top: 70px !important;
             transition: top 0.3s ease;
         }
 
-        /* CAPÇALERA I LOGO */
         .app-header {
             position: absolute;
             top: 0;
@@ -91,7 +89,6 @@
             white-space: nowrap;
         }
 
-        /* CERCADOR */
         .search-container {
             position: relative;
             display: flex;
@@ -183,7 +180,6 @@
             color: #475569;
         }
 
-        /* AUTOR */
         .author-tag {
             position: absolute;
             bottom: 12px;
@@ -201,7 +197,6 @@
             border: 1px solid #cbd5e1;
         }
 
-        /* PANELL DE FILTRES */
         .panel-filtres {
             position: absolute;
             top: 75px;
@@ -281,7 +276,6 @@
             height: 16px;
         }
 
-        /* QUADRE INFORMATIU DESPLEGABLE */
         .info-quadre {
             position: absolute;
             bottom: 12px;
@@ -349,7 +343,6 @@
             color: #475569;
         }
 
-        /* BOTÓ DE RUTA A GOOGLE MAPS */
         .btn-gmaps {
             display: block;
             margin-top: 8px;
@@ -364,11 +357,12 @@
             box-shadow: 0 2px 5px rgba(37, 99, 235, 0.25);
         }
 
-        /* POPUPS I TOOLTIPS LEAFLET SENSE SCROLLBAR I AMB AMPLI MARGE */
         .leaflet-popup-content-wrapper {
             border-radius: 12px;
             overflow: visible !important;
             box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+            max-height: 75vh;
+            overflow-y: auto !important;
         }
 
         .leaflet-popup-content {
@@ -382,6 +376,37 @@
             margin: 5px 0;
             border: 0;
             border-top: 1px solid #e2e8f0;
+        }
+
+        details.popup-desplegable {
+            margin: 6px 0;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            background: #f8fafc;
+            overflow: hidden;
+        }
+
+        details.popup-desplegable summary {
+            padding: 5px 8px;
+            font-weight: bold;
+            color: #1e3a8a;
+            cursor: pointer;
+            background: #eff6ff;
+            font-size: 11.5px;
+            user-select: none;
+            outline: none;
+        }
+
+        details.popup-desplegable summary:hover {
+            background: #dbeafe;
+        }
+
+        .popup-desplegable-content {
+            padding: 6px 8px;
+            font-size: 11px;
+            color: #334155;
+            border-top: 1px solid #e2e8f0;
+            line-height: 1.4;
         }
 
         .leaflet-tooltip.etiqueta-platja-nom {
@@ -430,7 +455,6 @@
             font-style: italic;
         }
 
-        /* MODO MÒBIL OPTIMITZAT */
         @media (max-width: 600px) {
             .app-header {
                 height: 58px;
@@ -538,10 +562,9 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        /* MARGE AMPLIAT DE MAPA PER CENTRAR LA COSTA I EL MAR MEDITERRANI */
         const boundsCatalunya = L.latLngBounds(
             L.latLng(39.5, -0.5),  
-            L.latLng(43.2, 5.0)    // Ampliat cap a l'est per donar marge al mar
+            L.latLng(43.2, 5.0)
         );
 
         const map = L.map('map', {
@@ -549,7 +572,7 @@
             maxBoundsViscosity: 0.8,
             minZoom: 8,
             maxZoom: 18
-        }).setView([41.35, 2.50], 9); // Centrat directament a sobre del mar Mediterrani enmig de la costa
+        }).setView([41.35, 2.50], 9);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
@@ -562,7 +585,6 @@
         let platjaSeleccionada = null;
         let marcadorUbicacioUsuari = null;
 
-        /* TAULA DE CORRECCIÓ DE UBICACIONS INRECTES */
         const correccionsUbicacio = {
             "arenys de mar": [41.5794, 2.5497],
             "sant andreu de llavaneres": [41.5712, 2.4816],
@@ -576,7 +598,6 @@
             "platja les barques": [41.6006, 2.6232]
         };
 
-        /* OBTENIR GEOLOCALITZACIÓ DE L'USUARI */
         if ("geolocation" in navigator) {
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
@@ -604,7 +625,6 @@
             );
         }
 
-        /* COMPTADOR DE VISITES */
         fetch('https://api.counterapi.dev/v1/von-vany-mapa/visites/up')
             .then(response => response.json())
             .then(data => {
@@ -638,30 +658,190 @@
             return codi ? String(codi).replace(/^0+/, "").trim() : "";
         }
 
-        function netejarText(txt) {
-            if (!txt) return "";
-            return String(txt).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+        function obtenirCodi(obj) {
+            if (!obj) return "";
+            for (let k of Object.keys(obj)) {
+                if (k.toLowerCase().includes('codi') || k.toLowerCase().includes('id_platja')) {
+                    let v = normalitzarCodi(obj[k]);
+                    if (v) return v;
+                }
+            }
+            return "";
         }
 
-        function netejarNomPlatja(txt) {
+        function netejarText(txt) {
             if (!txt) return "";
-            return String(txt).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-                .replace(/\b(platja|platjes|cala|de|del|la|les|el|els|d)\b/g, " ")
-                .replace(/[^a-z0-9]/g, "").trim();
+            return String(txt)
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/['’`\-_]/g, " ")
+                .trim();
+        }
+
+        function netejarNomCanonical(txt) {
+            if (!txt) return "";
+            return netejarText(txt)
+                .replace(/\b(platja|platjes|platges|cala|de|del|la|les|el|els|d|l|barcelona|badalona|tarragona|girona)\b/g, " ")
+                .replace(/[^a-z0-9]/g, "")
+                .trim();
         }
 
         function esCert(valor) {
             if (!valor) return false;
             const s = String(valor).toLowerCase().trim();
-            if (['n/a', 'n/d', 'no', 'false', '0', 'cap', 'sense dades', ''].includes(s)) return false;
+            if (['n/a', 'n/d', 'no', 'false', '0', 'cap', 'sense dades', 'fals', ''].includes(s)) return false;
             return s === 'cert' || s === 'si' || s === 'sí' || s === 'true' || s === '1';
         }
 
         function teMeduses(txt) {
             if (!txt) return false;
             const s = String(txt).toLowerCase().trim();
-            const valorsSenseMeduses = ['n/a', 'n/d', 'sense dades', 'cap', 'no', 'sense meduses', 'cap observació', 'sense observacions', 'nul·la', 'null', 'undefined', '-', ''];
+            const valorsSenseMeduses = ['n/a', 'n/d', 'sense dades', 'cap', 'no', 'fals', 'false', 'sense meduses', 'cap observació', 'sense observacions', 'nul·la', 'null', 'undefined', '-', ''];
             return !valorsSenseMeduses.includes(s);
+        }
+
+        function isIsoDate(str) {
+            return typeof str === 'string' && (/\d{4}-\d{2}-\d{2}/.test(str) || str.includes('T00:00:00'));
+        }
+
+        function obtenirTempAigua(e) {
+            if (!e || typeof e !== 'object') return 'N/D';
+            
+            for (let [k, v] of Object.entries(e)) {
+                let key = k.toLowerCase();
+                if ((key.includes('aigua') || key.includes('mar')) && key.includes('temperatura')) {
+                    if (v && !isIsoDate(v)) {
+                        let numMatch = String(v).match(/\d+([.,]\d+)?/);
+                        if (numMatch) {
+                            let num = parseFloat(numMatch[0].replace(',', '.'));
+                            if (num >= 10 && num <= 35) return `${num} ºC`;
+                        }
+                    }
+                }
+            }
+
+            for (let [k, v] of Object.entries(e)) {
+                let key = k.toLowerCase();
+                if (key.includes('mar') && v) {
+                    let numMatch = String(v).match(/\b(1[5-9]|2[0-9]|3[0-5])([.,]\d+)?\b/);
+                    if (numMatch) {
+                        let num = parseFloat(numMatch[0].replace(',', '.'));
+                        return `${num} ºC`;
+                    }
+                }
+            }
+
+            return 'N/D';
+        }
+
+        function obtenirTempAmbient(e) {
+            if (!e || typeof e !== 'object') return 'N/D';
+
+            for (let [k, v] of Object.entries(e)) {
+                let key = k.toLowerCase();
+                if (key.includes('temperatura') && !key.includes('aigua') && !key.includes('mar')) {
+                    if (v && !isIsoDate(v)) {
+                        let strVal = String(v).trim();
+                        let numMatch = strVal.match(/\d+([.,]\d+)?/);
+                        if (numMatch) {
+                            let num = parseFloat(numMatch[0].replace(',', '.'));
+                            if (num >= 15 && num <= 48) return `${num} ºC`;
+                        }
+                    }
+                }
+            }
+            return 'N/D';
+        }
+
+        function obtenirEstatMar(e) {
+            if (!e || typeof e !== 'object') return 'N/D';
+
+            let candidat = "";
+            for (let [k, v] of Object.entries(e)) {
+                let key = k.toLowerCase();
+                if ((key === 'estat_mar' || key === 'mar_estat' || key === 'estatmar' || key === 'estat_del_mar') && v) {
+                    candidat = String(v).trim();
+                    break;
+                }
+            }
+
+            if (!candidat) {
+                for (let [k, v] of Object.entries(e)) {
+                    let key = k.toLowerCase();
+                    if (key.includes('mar') && !key.includes('temp') && !key.includes('qualitat') && !key.includes('bandera') && !key.includes('medus')) {
+                        let vStr = String(v).trim();
+                        if (vStr && !vStr.match(/^\d+([.,]\d+)?$/) && !['fals','cert','false','true','null','undefined','n/d'].includes(vStr.toLowerCase())) {
+                            candidat = vStr;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (!candidat) return 'N/D';
+
+            const ventsEDireccions = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw', 'no', 'so', 'nord', 'sud', 'est', 'oest', 'llevant', 'ponent', 'gregal', 'garbi', 'garbí', 'mestral', 'xaloc', 'tramuntana', 'migjorn'];
+            
+            let parts = candidat.split(/[.,;]+/).map(p => p.trim()).filter(Boolean);
+            let resultatsValids = [];
+
+            parts.forEach(p => {
+                let pLower = p.toLowerCase();
+                if (['fals', 'cert', 'false', 'true', 'n/a', 'n/d', 'null', 'undefined', 'no', 'si', 'sí'].includes(pLower)) return;
+                if (/^\d+([.,]\d+)?(\s*ºc|\s*m)?$/i.test(p)) return;
+                if (ventsEDireccions.includes(pLower)) return;
+                resultatsValids.push(p);
+            });
+
+            if (resultatsValids.length === 0) {
+                let clean = candidat.replace(/\b(fals|cert|false|true|null|undefined)\b/gi, '').replace(/\d+([.,]\d+)?/g, '').trim();
+                clean = clean.replace(/^[.,; ]+|[.,; ]+$/g, '');
+                return clean || 'N/D';
+            }
+
+            let res = resultatsValids.join(', ');
+            return res.charAt(0).toUpperCase() + res.slice(1);
+        }
+
+        function obtenirQualitatAigua(e) {
+            if (!e || typeof e !== 'object') return 'N/D';
+
+            let candidat = "";
+
+            for (let [k, v] of Object.entries(e)) {
+                let key = k.toLowerCase();
+                if ((key.includes('qualitat') || key.includes('aspecte') || key === 'estat_aigua' || key === 'aigua') && v) {
+                    candidat = String(v).trim();
+                    break;
+                }
+            }
+
+            if (!candidat) {
+                for (let [k, v] of Object.entries(e)) {
+                    let key = k.toLowerCase();
+                    if (key.includes('aigua') && !key.includes('temp') && !key.includes('mar') && !key.includes('bandera') && !key.includes('medus')) {
+                        let vStr = String(v).trim();
+                        if (vStr && !vStr.match(/^\d+([.,]\d+)?$/) && !['fals','cert','false','true','null','undefined','n/d'].includes(vStr.toLowerCase())) {
+                            candidat = vStr;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (!candidat) return 'N/D';
+
+            let parts = candidat.split(/[.,;]+/).map(p => p.trim()).filter(Boolean);
+            let resultatsValids = parts.filter(p => {
+                let pLower = p.toLowerCase();
+                return !['fals', 'cert', 'false', 'true', 'n/a', 'n/d', 'null', 'undefined', 'no', 'si', 'sí', '0', '1'].includes(pLower);
+            });
+
+            if (resultatsValids.length === 0) return 'N/D';
+
+            let res = resultatsValids.join('. ');
+            return res.charAt(0).toUpperCase() + res.slice(1);
         }
 
         function parseDataFlexible(dataStr) {
@@ -719,30 +899,34 @@
             document.getElementById('data-actualitzacio').innerText = dataTextGlobal || "Sense data";
 
             const mapaCodi = {};
-            const mapaNomNetejat = {};
-            
+            const mapaNomCanonical = {};
+            const llistaEstats = [];
+
             estatsTempsReal.forEach(e => {
-                const codi = normalitzarCodi(e.codi_platja || e.codiplatja);
+                const codi = obtenirCodi(e);
                 if (codi && !mapaCodi[codi]) mapaCodi[codi] = e;
                 
-                const nom = netejarNomPlatja(e.platja);
-                if (nom && !mapaNomNetejat[nom]) mapaNomNetejat[nom] = e;
+                const nomRaw = e.platja || e.nom_platja || e.nomplatja || e.platja_nom || '';
+                const nomCan = netejarNomCanonical(nomRaw);
+                if (nomCan && !mapaNomCanonical[nomCan]) mapaNomCanonical[nomCan] = e;
+
+                llistaEstats.push({ record: e, codi: codi, canonical: nomCan, raw: netejarText(nomRaw) });
             });
 
             const municipisAgrupats = {};
 
             equipaments.forEach(platja => {
                 const textPlatjaNet = netejarText(platja.platja);
-                const nomNet = netejarNomPlatja(platja.platja);
+                const canonicalNet = netejarNomCanonical(platja.platja);
 
                 let lat = null, lng = null;
 
                 if (correccionsUbicacio[textPlatjaNet]) {
                     lat = correccionsUbicacio[textPlatjaNet][0];
                     lng = correccionsUbicacio[textPlatjaNet][1];
-                } else if (correccionsUbicacio[nomNet]) {
-                    lat = correccionsUbicacio[nomNet][0];
-                    lng = correccionsUbicacio[nomNet][1];
+                } else if (correccionsUbicacio[canonicalNet]) {
+                    lat = correccionsUbicacio[canonicalNet][0];
+                    lng = correccionsUbicacio[canonicalNet][1];
                 } else {
                     let c1 = parseFloat(platja.coordenada_x);
                     let c2 = parseFloat(platja.coordenada_y);
@@ -767,37 +951,80 @@
                 municipisAgrupats[nomMuni].count++;
                 municipisAgrupats[nomMuni].coords.push([lat, lng]);
 
-                const codiP = normalitzarCodi(platja.codiplatja);
-                let e = mapaCodi[codiP] || mapaNomNetejat[nomNet] || {};
+                /* COINCIDÈNCIA DE PLATGES */
+                const codiP = obtenirCodi(platja);
+                let e = mapaCodi[codiP];
 
-                const rawB = String(e.bandera_estat || e.estat_bandera || '').toLowerCase().trim();
+                if (!e && canonicalNet) {
+                    e = mapaNomCanonical[canonicalNet];
+                }
+
+                if (!e && canonicalNet && canonicalNet.length >= 4) {
+                    let trobat = llistaEstats.find(item => item.canonical && (item.canonical.includes(canonicalNet) || canonicalNet.includes(item.canonical)));
+                    if (trobat) e = trobat.record;
+                }
+
+                if (!e && textPlatjaNet && textPlatjaNet.length >= 4) {
+                    let trobat = llistaEstats.find(item => item.raw && (item.raw.includes(textPlatjaNet) || textPlatjaNet.includes(item.raw)));
+                    if (trobat) e = trobat.record;
+                }
+
+                if (!e) e = {};
+
+                /* BANDERA */
+                let rawB = "";
+                for (let k of Object.keys(e)) {
+                    if (k.toLowerCase().includes('bandera')) {
+                        rawB = String(e[k]).toLowerCase().trim();
+                        break;
+                    }
+                }
+
                 let bCol = 'sense_dades', bIcon = '⚪', bTxt = 'SENSE DADES';
+                if (rawB.includes('verda')) { bCol = 'verda'; bIcon = '🟢'; bTxt = 'VERDA'; }
+                else if (rawB.includes('groga')) { bCol = 'groga'; bIcon = '🟡'; bTxt = 'GROGA'; }
+                else if (rawB.includes('vermella')) { bCol = 'vermella'; bIcon = '🔴'; bTxt = 'VERMELLA'; }
 
-                if (rawB === 'verda') { bCol = 'verda'; bIcon = '🟢'; bTxt = 'VERDA'; }
-                else if (rawB === 'groga') { bCol = 'groga'; bIcon = '🟡'; bTxt = 'GROGA'; }
-                else if (rawB === 'vermella') { bCol = 'vermella'; bIcon = '🔴'; bTxt = 'VERMELLA'; }
-
-                const rawMeduses = e.presencia_meduses || e.estat_meduses || 'N/A';
+                /* MEDUSES */
+                let rawMeduses = "";
+                for (let k of Object.keys(e)) {
+                    if (k.toLowerCase().includes('medus')) {
+                        rawMeduses = String(e[k]).trim();
+                        break;
+                    }
+                }
                 const hiHaMeduses = teMeduses(rawMeduses);
                 const textMedusesMostrar = hiHaMeduses ? `⚠️ Presència (${rawMeduses})` : '✅ Sense meduses';
 
                 const rawDatePlatja = e.estat_data || e.data_actualitzacio || e.data;
                 const dataPlatjaText = formatarData(rawDatePlatja) || dataTextGlobal || "N/D";
 
-                const tempAigua = (e.temperatura_aigua && e.temperatura_aigua !== 'N/A' && e.temperatura_aigua !== 'N/D') 
-                    ? `${e.temperatura_aigua} ºC` 
-                    : 'N/D';
+                const tempAigua = obtenirTempAigua(e);
+                const tempAmbient = obtenirTempAmbient(e);
+                const estatMarText = obtenirEstatMar(e);
+                const qualitatAiguaText = obtenirQualitatAigua(e);
 
-                const urlGoogleMaps = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+                const urlGoogleMaps = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
 
                 const popup = `
                     <div class="popup-title">${platja.platja}</div>
                     <b>Estat:</b> ${bIcon} ${bTxt}<br>
-                    <i>${e.bandera_motiubandera || 'Sense incidències'}</i><hr>
-                    <b>🌡️ Temp. aigua:</b> ${tempAigua}<br>
+                    <i>${e.bandera_motiubandera || e.motiu_bandera || 'Sense incidències'}</i><hr>
+                    <b>🌊 Temp. aigua:</b> ${tempAigua}<br>
+                    <b>🌡️ Temp. ambient:</b> ${tempAmbient}<br>
                     <b>🪼 Meduses:</b> ${textMedusesMostrar}<hr>
+
+                    <details class="popup-desplegable">
+                        <summary>🌊 Més informació marítima</summary>
+                        <div class="popup-desplegable-content">
+                            <b>🌊 Estat de la mar:</b> ${estatMarText}<br>
+                            <b>💧 Qualitat de l'aigua:</b> ${qualitatAiguaText}
+                        </div>
+                    </details>
+                    <hr>
+
                     <b>🔵 Bandera Blava:</b> ${esCert(platja.banderablava)?'Sí':'No'}<br>
-                    <b>🚽 Lavabos:</b> ${esCert(platja.vaters)?'Sí':'No'}<br>
+                    <b>Toilet Lavabos:</b> ${esCert(platja.vaters)?'Sí':'No'}<br>
                     <b>🛟 Vigilància:</b> ${esCert(platja.socorristes)?'Sí':'No'}<br>
                     <b>🚿 Dutxes:</b> ${esCert(platja.dutxes)?'Sí':'No'}<br>
                     <b>♿ Accés PMR:</b> ${esCert(platja.aparcamentdiscapacitats)?'Sí':'No'}<br>
@@ -807,18 +1034,16 @@
                     <div class="popup-date">📅 Consultat: ${dataPlatjaText}</div>
                 `;
 
-                /* OPCONS DE POPUP AMB AMPLI MARGE SUPERIOR (120px) I SENSE LIMITACIÓ D'ALÇADA */
                 const popupOptions = {
                     autoPan: true,
-                    autoPanPaddingTopLeft: L.point(20, 120),
-                    autoPanPaddingBottomRight: L.point(20, 30),
+                    autoPanPaddingTopLeft: L.point(20, 180),
+                    autoPanPaddingBottomRight: L.point(20, 50),
                     offset: L.point(0, -10)
                 };
 
                 const m = L.marker([lat, lng], { icon: iconaInvisible }).bindPopup(popup, popupOptions);
                 m.bindTooltip(`${bIcon} ${platja.platja}`, { permanent: true, direction: 'center', className: 'etiqueta-platja-nom', interactive: true });
 
-                /* CLIQUAR LA PLATJA DIRECTAMENT */
                 m.on('click', () => {
                     platjaSeleccionada = m;
                     enviarVistaPlatja(lat, lng);
@@ -875,12 +1100,9 @@
             aplicarFiltres();
         });
 
-        /* FUNCIÓ D'ENFOCAMENT QUE BAIXA LA PLATJA I DEIXA AIRE A DALT */
         function enviarVistaPlatja(lat, lng) {
             const targetZoom = 13;
-            
-            // Incrementem la latitud en +0.013 per desplaçar la càmera cap amunt i baixar la platja
-            map.flyTo([lat + 0.013, lng], targetZoom, {
+            map.flyTo([lat + 0.018, lng], targetZoom, {
                 duration: 0.8,
                 easeLinearity: 0.25
             });
@@ -935,7 +1157,6 @@
 
         document.querySelectorAll('.panel-contingut input').forEach(i => i.addEventListener('change', aplicarFiltres));
 
-        /* CERCADOR I AUTOCOMPLETAT */
         const searchInput = document.getElementById('searchInput');
         const searchBtn = document.getElementById('searchBtn');
         const searchSuggestions = document.getElementById('searchSuggestions');

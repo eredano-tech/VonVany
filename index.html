@@ -27,14 +27,19 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <style>
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+
         body, html {
             margin: 0;
             padding: 0;
             height: 100%;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: #aad3df;
             touch-action: manipulation;
             overflow: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
         #map {
@@ -42,11 +47,12 @@
             height: 100vh;
             z-index: 1;
             background-color: #aad3df;
+            will-change: transform;
         }
 
         .leaflet-top.leaflet-left {
             top: 70px !important;
-            transition: top 0.3s ease;
+            transition: top 0.2s ease-out;
         }
 
         .app-header {
@@ -55,8 +61,9 @@
             left: 0;
             width: 100%;
             height: 60px;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             z-index: 2000;
             display: flex;
             align-items: center;
@@ -65,6 +72,7 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             box-sizing: border-box;
             gap: 8px;
+            transform: translateZ(0);
         }
 
         .logo-container {
@@ -105,7 +113,7 @@
             background: #f1f5f9;
             border: 1.5px solid #cbd5e1;
             overflow: hidden;
-            transition: all 0.2s ease;
+            transition: border-color 0.15s ease, background-color 0.15s ease;
         }
 
         .search-box:focus-within {
@@ -146,6 +154,7 @@
             box-shadow: 0 6px 20px rgba(0,0,0,0.15);
             max-height: 260px;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
             display: none;
             z-index: 3000;
             border: 1px solid #e2e8f0;
@@ -166,7 +175,7 @@
             border-bottom: none;
         }
 
-        .suggestion-item:hover {
+        .suggestion-item:active {
             background-color: #eff6ff;
             color: #1e3a8a;
         }
@@ -192,10 +201,12 @@
             background: rgba(255, 255, 255, 0.92);
             padding: 4px 8px;
             border-radius: 6px;
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
             letter-spacing: 0.5px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.15);
             border: 1px solid #cbd5e1;
+            pointer-events: none;
         }
 
         .panel-filtres {
@@ -208,9 +219,12 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             width: 270px;
             max-height: 80vh;
-            backdrop-filter: blur(5px);
-            transition: all 0.3s ease;
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
             overflow: hidden;
+            will-change: transform, opacity;
+            transform: translateZ(0);
         }
 
         .panel-header {
@@ -243,6 +257,7 @@
             padding: 12px 14px;
             max-height: calc(80vh - 50px);
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .panel-filtres.plegat .panel-contingut {
@@ -273,8 +288,8 @@
         .filtre-item input {
             margin-right: 8px;
             cursor: pointer;
-            width: 16px;
-            height: 16px;
+            width: 18px;
+            height: 18px;
         }
 
         .info-quadre {
@@ -291,7 +306,9 @@
             line-height: 1.3;
             border-left: 4px solid #3b82f6;
             max-width: calc(100% - 90px);
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            transform: translateZ(0);
         }
 
         .info-header {
@@ -329,10 +346,6 @@
             font-weight: bold;
         }
 
-        .info-quadre a:hover {
-            text-decoration: underline;
-        }
-
         .text-visites {
             font-weight: 600;
             color: #1e3a8a;
@@ -352,7 +365,7 @@
 
         .btn-popup {
             flex: 1;
-            padding: 7px 6px;
+            padding: 8px 6px;
             border-radius: 8px;
             text-decoration: none !important;
             font-weight: bold;
@@ -364,6 +377,11 @@
             align-items: center;
             justify-content: center;
             gap: 4px;
+            transition: opacity 0.1s ease;
+        }
+
+        .btn-popup:active {
+            opacity: 0.8;
         }
 
         .btn-gmaps {
@@ -380,6 +398,7 @@
             box-shadow: 0 6px 20px rgba(0,0,0,0.25);
             max-height: 75vh;
             overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch;
         }
 
         .leaflet-popup-content {
@@ -491,14 +510,12 @@
 <body>
 
     <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
-        .then(reg => console.log('Service Worker registrado:', reg))
-        .catch(err => console.log('Error al registrar Service Worker:', err));
-    });
-  }
-</script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(() => {});
+            });
+        }
+    </script>
 
     <header class="app-header">
         <div class="logo-container">
@@ -521,7 +538,7 @@
     </header>
 
     <div class="panel-filtres" id="panelFiltres">
-        <div class="panel-header" onclick="toggleFiltres()">
+        <div class="panel-header" id="panelHeader">
             <h3>🔍 Filtres</h3>
             <button class="btn-toggle-filtres" id="btnToggle">▲ Plegar</button>
         </div>
@@ -553,9 +570,9 @@
     </div>
 
     <div class="info-quadre plegat" id="infoQuadre">
-        <div class="info-header" onclick="toggleInfo()">
+        <div class="info-header" id="infoHeader">
             <div>
-                <b>Font:</b> <a href="https://analisi.transparenciacatalunya.cat/Turisme/Estat-de-les-platges-de-Catalunya-informaci-immedi/4baz-cjv2/about_data" target="_blank">Gencat</a> | <span id="data-actualitzacio">--/--/----</span>
+                <b>Font:</b> <a href="https://analisi.transparenciacatalunya.cat/Turisme/Estat-de-les-platges-de-Catalunya-informaci-immedi/4baz-cjv2/about_data" target="_blank" rel="noopener">Gencat</a> | <span id="data-actualitzacio">--/--/----</span>
             </div>
             <button class="btn-toggle-info" id="btnToggleInfo">▲ Més</button>
         </div>
@@ -574,16 +591,22 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
+        document.addEventListener('touchstart', function() {}, { passive: true });
+
         const boundsCatalunya = L.latLngBounds(
             L.latLng(39.5, -0.5),  
             L.latLng(43.2, 5.0)
         );
 
+        // preferCanvas: true activa el renderitzat per GPU en dispositius mòbils
         const map = L.map('map', {
+            preferCanvas: true,
             maxBounds: boundsCatalunya,
             maxBoundsViscosity: 0.8,
             minZoom: 8,
-            maxZoom: 18
+            maxZoom: 18,
+            zoomAnimation: true,
+            markerZoomAnimation: true
         }).setView([41.35, 2.50], 9);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -591,11 +614,13 @@
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
+        const capaMarcadors = L.layerGroup().addTo(map);
+        const capaMunicipis = L.layerGroup().addTo(map);
+
         let llistaMarcadors = [];
         let llistaMunicipis = [];
         let llistaCerca = [];
         let platjaSeleccionada = null;
-        let marcadorUbicacioUsuari = null;
 
         const correccionsUbicacio = {
             "arenys de mar": [41.5794, 2.5497],
@@ -616,7 +641,7 @@
                     const lat = pos.coords.latitude;
                     const lng = pos.coords.longitude;
 
-                    marcadorUbicacioUsuari = L.circleMarker([lat, lng], {
+                    const marcadorUbicacioUsuari = L.circleMarker([lat, lng], {
                         radius: 8,
                         fillColor: "#2563eb",
                         color: "#ffffff",
@@ -630,15 +655,13 @@
                         direction: 'top'
                     });
                 },
-                (err) => {
-                    console.log("Geolocalització no disponible:", err.message);
-                },
-                { enableHighAccuracy: true, timeout: 10000 }
+                () => {},
+                { enableHighAccuracy: false, timeout: 5000 }
             );
         }
 
         fetch('https://api.counterapi.dev/v1/von-vany-mapa/visites/up')
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
                 if (data && data.count !== undefined) {
                     document.getElementById('visites-text').innerText = `Persona nº ${data.count} que visita Von Vany!`;
@@ -663,6 +686,9 @@
             quadre.classList.toggle('plegat');
             btn.innerText = quadre.classList.contains('plegat') ? '▲ Més' : '▼ Menys';
         }
+
+        document.getElementById('panelHeader').addEventListener('click', toggleFiltres);
+        document.getElementById('infoHeader').addEventListener('click', toggleInfo);
 
         if (window.innerWidth < 768) toggleFiltres();
 
@@ -1115,57 +1141,63 @@
         });
 
         function enviarVistaPlatja(lat, lng) {
-            const targetZoom = 13;
-            map.flyTo([lat + 0.018, lng], targetZoom, {
-                duration: 0.8,
+            map.flyTo([lat + 0.018, lng], 13, {
+                duration: 0.6,
                 easeLinearity: 0.25
             });
         }
 
+        let idAnimacioFiltre = null;
         function aplicarFiltres() {
-            const mostrarMunicipis = document.getElementById('f-municipis').checked;
-            llistaMunicipis.forEach(m => {
-                if (mostrarMunicipis) m.addTo(map); else map.removeLayer(m);
-            });
+            if (idAnimacioFiltre) cancelAnimationFrame(idAnimacioFiltre);
 
-            const f = {
-                verda: document.getElementById('f-verda').checked,
-                groga: document.getElementById('f-groga').checked,
-                vermella: document.getElementById('f-vermella').checked,
-                sense: document.getElementById('f-sense-bandera').checked,
-                noMed: document.getElementById('f-sense-meduses').checked,
-                blava: document.getElementById('f-banderablava').checked,
-                vaters: document.getElementById('f-vaters').checked,
-                socors: document.getElementById('f-socorristes').checked,
-                dutxes: document.getElementById('f-dutxes').checked,
-                disc: document.getElementById('f-discapacitats').checked,
-                bars: document.getElementById('f-bars').checked,
-                masc: document.getElementById('f-mascotes').checked
-            };
-
-            llistaMarcadors.forEach(m => {
-                const d = m.dades;
-                let v = true;
-                if (d.col === 'verda' && !f.verda) v = false;
-                if (d.col === 'groga' && !f.groga) v = false;
-                if (d.col === 'vermella' && !f.vermella) v = false;
-                if (d.col === 'sense_dades' && !f.sense) v = false;
+            idAnimacioFiltre = requestAnimationFrame(() => {
+                const mostrarMunicipis = document.getElementById('f-municipis').checked;
                 
-                if (f.noMed && d.hiHaMeduses) v = false;
-                
-                if (f.blava && !d.blava) v = false;
-                if (f.vaters && !esCert(d.p.vaters)) v = false;
-                if (f.socors && !esCert(d.p.socorristes)) v = false;
-                if (f.dutxes && !esCert(d.p.dutxes)) v = false;
-                if (f.disc && !esCert(d.p.aparcamentdiscapacitats)) v = false;
-                if (f.bars && !esCert(d.p.bars)) v = false;
-                if (f.masc && !esCert(d.p.mascotes)) v = false;
-
-                if (m === platjaSeleccionada) {
-                    v = true;
+                capaMunicipis.clearLayers();
+                if (mostrarMunicipis) {
+                    llistaMunicipis.forEach(m => capaMunicipis.addLayer(m));
                 }
 
-                if (v) m.addTo(map); else map.removeLayer(m);
+                const f = {
+                    verda: document.getElementById('f-verda').checked,
+                    groga: document.getElementById('f-groga').checked,
+                    vermella: document.getElementById('f-vermella').checked,
+                    sense: document.getElementById('f-sense-bandera').checked,
+                    noMed: document.getElementById('f-sense-meduses').checked,
+                    blava: document.getElementById('f-banderablava').checked,
+                    vaters: document.getElementById('f-vaters').checked,
+                    socors: document.getElementById('f-socorristes').checked,
+                    dutxes: document.getElementById('f-dutxes').checked,
+                    disc: document.getElementById('f-discapacitats').checked,
+                    bars: document.getElementById('f-bars').checked,
+                    masc: document.getElementById('f-mascotes').checked
+                };
+
+                capaMarcadors.clearLayers();
+
+                llistaMarcadors.forEach(m => {
+                    const d = m.dades;
+                    let v = true;
+                    if (d.col === 'verda' && !f.verda) v = false;
+                    if (d.col === 'groga' && !f.groga) v = false;
+                    if (d.col === 'vermella' && !f.vermella) v = false;
+                    if (d.col === 'sense_dades' && !f.sense) v = false;
+                    
+                    if (f.noMed && d.hiHaMeduses) v = false;
+                    
+                    if (f.blava && !d.blava) v = false;
+                    if (f.vaters && !esCert(d.p.vaters)) v = false;
+                    if (f.socors && !esCert(d.p.socorristes)) v = false;
+                    if (f.dutxes && !esCert(d.p.dutxes)) v = false;
+                    if (f.disc && !esCert(d.p.aparcamentdiscapacitats)) v = false;
+                    if (f.bars && !esCert(d.p.bars)) v = false;
+                    if (f.masc && !esCert(d.p.mascotes)) v = false;
+
+                    if (m === platjaSeleccionada) v = true;
+
+                    if (v) capaMarcadors.addLayer(m);
+                });
             });
         }
 
@@ -1223,17 +1255,16 @@
                 else if (col === 'sense_dades') document.getElementById('f-sense-bandera').checked = true;
 
                 aplicarFiltres();
-
                 enviarVistaPlatja(item.lat, item.lng);
 
                 setTimeout(() => {
                     item.marker.openPopup();
-                }, 850);
+                }, 650);
             } else if (item.tipus === 'municipi') {
                 if (item.bounds) {
                     map.fitBounds(item.bounds, { padding: [50, 50], maxZoom: 13 });
                 } else {
-                    map.flyTo([item.lat, item.lng], 13, { duration: 0.8 });
+                    map.flyTo([item.lat, item.lng], 13, { duration: 0.6 });
                 }
             }
         }
